@@ -378,7 +378,7 @@ def turnDeg(deg, threshold = 0.1, sensitivity = 1):
 
 
 
-def inLineCM(cm, threshold = 0.1, sensitivity = 1, correctHeading = False):
+def inLineCM(cm, threshold = 0.1, sensitivity = 1, correctHeading = True):
     global botPose, isBusy, gyro, angle, distance
     #starts movement
     isBusy = True
@@ -394,6 +394,7 @@ def inLineCM(cm, threshold = 0.1, sensitivity = 1, correctHeading = False):
     pastTime = 0
     derivativeTimer = StopWatch()
 
+    zeroDistance()
 
     #loop for reaching the target state
     while isBusy: 
@@ -579,8 +580,9 @@ def inCurveCM(target, keepHeading = False):
         signY = -1
 
 
-    turnAngle = -math.atan2(errorX, errorY)
-    theta = 2 * (math.atan2(errorY, errorX) - toRadians(botPose.head))
+    theta = normalizeRadians(2 * (math.atan2(errorY, errorX) - toRadians(botPose.head)))
+    if theta > 2 * math.pi:
+        theta = 2 * math.pi - theta
     d = hypot(errorX, errorY)
 
     radius = d / (2 * math.sin(theta / 2))
@@ -601,20 +603,29 @@ def inCurveCM(target, keepHeading = False):
     else:
         velR = 100 * velR / velL
         velL = 100
+    
+    targetInLineAngle = toDegrees(-math.atan2(errorX, errorY))
+    if theta / 2 <= 90:
+        tangentAngle = targetInLineAngle - toDegrees(theta / 2) - 90
+    else:
+         tangentAngle = targetInLineAngle - 180 + toDegrees(theta / 2) - 90
         
     #print('left: ', velL)
     #print('right: ', velR)
 
     print('arc', arcD)
     print('radius', radius)
-    print('       ')
-    printPose()
-    print('       ')
-    print('       ')
-
+    print('             ')
+    print('theta (rad)', theta)
+    print('theta (deg)', toDegrees(theta))
+    print('tangent', tangentAngle)
+    print('             ')
+    print('L', velL)
+    print('R', velR)
     
-
     #wait(2000)
+
+    turnDeg(tangentAngle)
 
     isBusy = True
     zeroDistance()
@@ -622,8 +633,8 @@ def inCurveCM(target, keepHeading = False):
     while isBusy:
         updateAll()
 
-        leftDrive.dc(velR * signX)
-        rightDrive.dc(velL * signX)
+        leftDrive.dc(clipMotor(velR * signX))
+        rightDrive.dc(clipMotor(velL * signX))
 
         getPose()
 
@@ -725,9 +736,13 @@ def loop():
                 if zeroBeforeEveryRun:
                     zero()
 
-                inCurveCM(Pose(40, 20, -90), keepHeading = True)
+                inCurveCM(Pose(30, 20, 0), keepHeading = True)
+                inCurveCM(Pose(10, 0, -90))
+                #turnDeg(45)
+                #inLineCM(60)
+                #inLineCM(-30)
+                #turnDeg(180)
                 #inCurveCM(Pose(20, 0, 0), keepHeading = False)
-                #inCurveCM(Pose(10, 90, -90))
 
                 rightDone = True
             
