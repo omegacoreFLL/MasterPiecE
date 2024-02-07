@@ -27,6 +27,8 @@ MAX_ANGULAR_VEL = 0 #deg / s
 distanceBetweenWheels = 9.97
 dW = distanceBetweenWheels / 2
 
+generalCurveMultiplier = 3
+
 
 
 

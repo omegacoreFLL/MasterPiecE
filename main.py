@@ -245,14 +245,14 @@ def initFont(size, bold):
     brick.screen.set_font(coolFont)
 
 def setPoseEstimate(pose):
-    global leftDrive, rightDrive
+    global leftDrive, rightDrive, offset
     global botPose, posL, posR, angle, pastPosL, pastPosR, pastAngle 
     
     leftDrive.reset_angle(angle = 0)
     rightDrive.reset_angle(angle = 0)
 
-    gyro.reset_angle(pose.head)
-    botPose.set(pose.x, pose.y, pose.head)
+    gyro.reset_angle(-normalizeDegrees(pose.head))
+    botPose.set(pose.x, pose.y, normalizeDegrees(pose.head))
 
     posL, posR, angle, pastPosL, pastPosR, pastAngle = (
         0, 0, 0, 0, 0, 0
@@ -387,7 +387,6 @@ def inLineCM(cm, threshold = 0.1, sensitivity = 1, correctHeading = True):
     #defining local variables
     updateAll()
     deg = botPose.head
-    sign = signum(deg)
     deg = normalizeDegrees(deg)
 
     pastError = 0
@@ -399,7 +398,6 @@ def inLineCM(cm, threshold = 0.1, sensitivity = 1, correctHeading = True):
     #loop for reaching the target state
     while isBusy: 
         updateAll()
-        getAngle()
 
 
         #separate value for heading correction, same logic as in -turnDeg- method
@@ -416,6 +414,9 @@ def inLineCM(cm, threshold = 0.1, sensitivity = 1, correctHeading = True):
             if (abs(headError) > threshold and abs(pastError) <= threshold) or failSwitchStop():
                 d = (headError - pastError) / (currentTime - pastTime)
                 correction = normalizeVoltage(headError * kP_head + d * kD_head)
+            
+            pastTime = currentTime
+            pastError = headError
         
 
         #the p controller for going straight this time
@@ -489,6 +490,7 @@ def toPositon(target, threshold = 0.1, sensitivity = 1,
 
     #twice for better accuracy
     turnDeg(deg)
+    wait(100)
     turnDeg(deg)
 
     isBusy = True 
@@ -543,7 +545,7 @@ def toPositon(target, threshold = 0.1, sensitivity = 1,
         
     if not keepHeading:
         turnDeg(target.head)
-        #wait(100)
+        wait(100)
         turnDeg(target.head)
 
     leftDrive.brake()
@@ -561,24 +563,21 @@ def slewRateLimiter(motor: Motor, speed: float):
 
 
 
-def inCurveCM(target, keepHeading = False):
+def inCurve(target, keepHeading = False, left = False,
+                listOfCommands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]):
     global botPose, dW, leftDrive, rightDrive, isBusy, distance
+    queuedCommands = not (len(listOfCommands) > 10)
+
     updateAll()
 
-    errorX = target.x - botPose.x
-    errorY = target.y - botPose.y
+    errorX = target.x
+    errorY = target.y
 
     if errorX <= 0:
         signX = -1
         errorX *= -1
     else:
         signX = 1
-    
-    if errorY <= 0:
-        signY = 1
-    else:
-        signY = -1
-
 
     theta = normalizeRadians(2 * (math.atan2(errorY, errorX) - toRadians(botPose.head)))
     if theta > 2 * math.pi:
@@ -604,11 +603,10 @@ def inCurveCM(target, keepHeading = False):
         velR = 100 * velR / velL
         velL = 100
     
-    targetInLineAngle = toDegrees(-math.atan2(errorX, errorY))
-    if theta / 2 <= 90:
-        tangentAngle = targetInLineAngle - toDegrees(theta / 2) - 90
-    else:
-         tangentAngle = targetInLineAngle - 180 + toDegrees(theta / 2) - 90
+    if queuedCommands:
+        for com in listOfCommands:
+            com.startPercent = com.startPercent / 100 * arcD
+            com.endPercent = com.endPercent / 100 * arcD
         
     #print('left: ', velL)
     #print('right: ', velR)
@@ -618,14 +616,11 @@ def inCurveCM(target, keepHeading = False):
     print('             ')
     print('theta (rad)', theta)
     print('theta (deg)', toDegrees(theta))
-    print('tangent', tangentAngle)
     print('             ')
     print('L', velL)
     print('R', velR)
     
     #wait(2000)
-
-    turnDeg(tangentAngle)
 
     isBusy = True
     zeroDistance()
@@ -640,6 +635,13 @@ def inCurveCM(target, keepHeading = False):
 
         if abs(abs(distance) - abs(arcD)) < 1:
             isBusy = False
+        
+        if queuedCommands:
+            for com in listOfCommands:
+                if abs(abs(distance) - abs(com.startPercent)) < 1:
+                    com.start()
+                elif abs(abs(distance) - abs(com.endPercent)) < 1:
+                    com.stop()
     
 
     if not keepHeading:
@@ -653,9 +655,6 @@ def inCurveCM(target, keepHeading = False):
     printPose()
     print('       ')
     print('       ')
-        
-
-
     
 
 
@@ -736,18 +735,31 @@ def loop():
                 if zeroBeforeEveryRun:
                     zero()
 
-                inCurveCM(Pose(30, 20, 0), keepHeading = True)
-                inCurveCM(Pose(10, 0, -90))
-                #turnDeg(45)
-                #inLineCM(60)
-                #inLineCM(-30)
-                #turnDeg(180)
-                #inCurveCM(Pose(20, 0, 0), keepHeading = False)
+                inCurve(Pose(30, 20, 0), keepHeading = False, listOfCommands = [ 
+                    Command(motor = leftTask, runType = 'RUN_ANGLE', speed = 300, value = 100, startPercent = 60, endPercent = 55)])
+                inCurve(Pose(-10, -20, -90))
+                turnDeg(-45)
+                inLineCM(30)
+                toPositon(Pose(0, 0, -90))
+                setPoseEstimate(Pose(0, 0, -90))
+                printPose()
+                print(' ')
+                updateAll()
+                printPose()
+                print(' ')
+                inLineCM(-30)
+                toPositon(Pose(50, 30, 45), forwards = False, listOfCommands = [ 
+                    Command(motor = leftTask, runType = 'RUN_ANGLE', speed = 300, value = -100, startPercent = 20, endPercent = 55)])
+                toPositon(Pose(0, 0, 0), forwards = False)
+
+                getPose()
+                printPose()
+
 
                 rightDone = True
             
         elif gamepad.wasJustPressed(Button.DOWN):
-            exit = False;
+            exit = False
 
             while exit == False:
                 updateAll()
@@ -755,7 +767,7 @@ def loop():
 
 
                 if gamepad.wasJustPressed(Button.UP):
-                    exit = True;
+                    exit = True
 
                 elif gamepad.wasJustPressed(Button.LEFT):
                     if not oneTimeUse or not downleftDone:

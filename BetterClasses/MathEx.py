@@ -16,7 +16,6 @@ class Point:
     def set(self, x, y):
         self.x = x 
         self.y = y 
-    
 
 
 class Pose(Point):
@@ -27,6 +26,7 @@ class Pose(Point):
     def set(self, x, y, head):
         super().set(x, y)
         self.head = head 
+    
 
 
 
