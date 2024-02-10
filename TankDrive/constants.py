@@ -52,8 +52,10 @@ kS_forw = 10
 #'timeToTurn' 360 deg, to calculate the time for a set amount of degrees. Basically making it more efficient
 #       in case of something going wrong. 'failSwitchTime' is just a generic variable to be used as threshold
 timeToTurn = 5 #sec
+timeRun1, timeRun2, timeRun3, timeRun4, timeRun5, timeRun6, timeRun7, timeRun8 = (
+    0, 0, 0, 0, 0, 0, 0, 0)
 failSwitchTime = 0
-
+run = 1
 
 
 
@@ -72,8 +74,17 @@ maxVoltage = 7.5 #volts
 
 
 #keeps account on which programs have been played before. Also if you're allowed to play them more than 1 time
-upDone, leftDone, middleDone, rightDone, downleftDone, downrightDone, oneTimeUse = (
-    False, False, False, False, False, False, False)
+upDone, leftDone, rightDone, downDone, middleUpDone, middleLeftDone, middleRightDone, middleDownDone = (
+    False, False, False, False, False, False, False, False)
+
+#some more boolean (True/False) variables, often referenced as 'flags', because they flag(show the user)
+#       if something should be done or not. It's a method of modularizing the code, which means the ability
+#       to change features really fast (in this case, whith a variable).
+#
+#I use this concept a lot, but in this case, those variables determine when all encoders, gyro value
+#       and position calculations should be reset to 0, for better accuracy
+zeroBeforeEveryMove, zeroBeforeEveryRun, zeroBeforeEveryTask, zeroBeforeMotors = False, True, False, False
+oneTimeUse = True
 
 
 

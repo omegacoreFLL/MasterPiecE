@@ -36,13 +36,6 @@ posL, posR, angle, pastPosL, pastPosR, pastAngle, deltaL, deltaR, deltaAngle, de
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 )
 
-#some more boolean (True/False) variables, often referenced as 'flags', because they flag(show the user)
-#       if something should be done or not. It's a method of modularizing the code, which means the ability
-#       to change features really fast (in this case, whith a variable).
-#
-#I use this concept a lot, but in this case, those variables determine when all encoders, gyro value
-#       and position calculations should be reset to 0, for better accuracy
-zeroBeforeEveryMove, zeroBeforeEveryRun, zeroBeforeEveryTask, zeroBeforeMotors = False, True, False, False
 
 #the -Pose- type variables containg info about the current & previous robot poses (past one isn't used, yet)
 botPose, pastBotPose = Pose(0, 0, 0), Pose(0, 0, 0)
@@ -193,19 +186,40 @@ def updateAll():
 
 
 #Telemetry (print things on ev3's screen, mostly for debugging)
-def showcaseOptions():
+def showcaseOptions(clear = True):
+    global run
+    if clear:
+        brick.screen.clear()
+        brick.screen.print('               ')
+
+    if run < 9:
+        brick.screen.print(' next run:', run)
+        brick.screen.print('               ')
+    else:
+        brick.screen.print('                ')
+        brick.screen.print('                ')
+        brick.screen.print('      DONE      ')
+        brick.screen.print('                ')
+        brick.screen.print('                ')
+
     if not upDone:
         brick.screen.print(' UP ')
     elif upDone and not leftDone:    
         brick.screen.print(' LEFT ')
-    elif leftDone and not middleDone:   
-        brick.screen.print(' MIDDLE ')
-    elif middleDone and not rightDone:    
+    elif leftDone and not rightDone:    
         brick.screen.print(' RIGHT ')
-    elif rightDone and not downleftDone:    
-        brick.screen.print(' DOWN + LEFT ')
-    elif downleftDone and not downrightDone:
-        brick.screen.print(' DOWN + RIGHT ')
+    elif rightDone and not downDone:    
+        brick.screen.print(' DOWN ')
+    elif downDone and not middleUpDone:   
+        brick.screen.print(' MIDDLE + UP ')
+    elif middleUpDone and not middleLeftDone:
+        brick.screen.print(' MIDDLE + LEFT ')
+    elif middleLeftDone and not middleRightDone:
+        brick.screen.print(' MIDDLE + RIGHT ')
+    elif middleRightDone and not middleDownDone:
+        brick.screen.print(' MIDDLE + DOWN ')
+
+
 
 def showcaseDeltas():
     brick.screen.print('delta L: ', deltaL)  
@@ -231,6 +245,14 @@ def printPose():
     print('y: ', botPose.y)
     print('deg: ', botPose.head)
 
+def printInProgress():
+    global run
+    brick.screen.clear()
+    brick.screen.print('                          ')
+    brick.screen.print('                          ')
+    brick.screen.print('run', run)
+    brick.screen.print('  in progress...')
+
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -238,6 +260,7 @@ def printPose():
 
 #ignore these 2, no actual use
 def setOneTimeUse(otu):
+    global oneTimeUse
     oneTimeUse = otu
 
 def initFont(size, bold):
@@ -607,20 +630,6 @@ def inCurve(target, keepHeading = False, left = False,
         for com in listOfCommands:
             com.startPercent = com.startPercent / 100 * arcD
             com.endPercent = com.endPercent / 100 * arcD
-        
-    #print('left: ', velL)
-    #print('right: ', velR)
-
-    print('arc', arcD)
-    print('radius', radius)
-    print('             ')
-    print('theta (rad)', theta)
-    print('theta (deg)', toDegrees(theta))
-    print('             ')
-    print('L', velL)
-    print('R', velR)
-    
-    #wait(2000)
 
     isBusy = True
     zeroDistance()
@@ -630,8 +639,6 @@ def inCurve(target, keepHeading = False, left = False,
 
         leftDrive.dc(clipMotor(velR * signX))
         rightDrive.dc(clipMotor(velL * signX))
-
-        getPose()
 
         if abs(abs(distance) - abs(arcD)) < 1:
             isBusy = False
@@ -651,11 +658,44 @@ def inCurve(target, keepHeading = False, left = False,
     leftDrive.brake()
     rightDrive.brake()
 
-    print('       ')
-    printPose()
-    print('       ')
-    print('       ')
-    
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+#* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+
+def run1():
+    wait(3000)
+    return 0
+
+def run2():
+    wait(3000)
+    return 0
+
+def run3():
+    wait(3000)
+    return 0
+
+def run4():
+    wait(3000)
+    return 0
+
+def run5():
+    wait(3000)
+    return 0
+
+def run6():
+    wait(3000)
+    return 0
+
+def run7():
+    wait(3000)
+    return 0
+
+def run8():
+    wait(3000)
+    return 0
 
 
 
@@ -668,129 +708,182 @@ def inCurve(target, keepHeading = False, left = False,
 #main loop, which exits only if the 'back' button is pressed on the brick
 #we check what button was pressed to know which program should run. Right now used only for testing
 def loop():
-    global upDone, leftDone, middleDone, rightDone, downleftDone, downrightDone
-    global oneTimeUse
+    global upDone, leftDone, rightDone, downDone, middleUpDone, middleLeftDone, middleRightDone, middleDownDone
+    global oneTimeUse, run
 
+    showcaseOptions()
     while True:
-        #showcaseOptions()
+        
         updateAll()
         gamepad.updateButtons()
-
+        
         
 
-        
-
-
+        #run 1
         if gamepad.wasJustPressed(Button.UP):
-            if not upDone or not oneTimeUse:
-                 #run 1
+            if not upDone or (not oneTimeUse and run == 1):
                 if zeroBeforeEveryRun:
                     zero()
+                brick.light.on(Color.GREEN)
+                printInProgress()
 
-                toPositon(Pose(40, -1, 0))
-                toPositon(Pose(0, -1, 0), forwards = False)
-                
+                run1()
+
+                brick.light.on(Color.RED)
                 upDone = True
-                
+                run += 1
+                showcaseOptions()
 
+
+
+
+        #run 2
         elif gamepad.wasJustPressed(Button.LEFT):
-            if not oneTimeUse or not leftDone:
-                #run 2  
+            if not oneTimeUse or (not leftDone and run == 2):  
                 if zeroBeforeEveryRun:
                     zero()
+                brick.light.on(Color.GREEN)
+                printInProgress()
 
-                setPoseEstimate(Pose(0, 0, 0))
-                toPositon(Pose(60, 10, 90), keepHeading = False, listOfCommands = [
-                    Command(motor = leftTask, runType = 'RUN_ANGLE', speed = 300, value = 100, startPercent = 10, endPercent = 55),
-                    Command(motor = leftTask, runType = 'RUN_ANGLE', speed = 300, value = -100, startPercent = 80, endPercent = 90)
-                ])
+                run2()
 
-                toPositon(Pose(60, 40, 0), keepHeading = False, forwards = False, listOfCommands = [
-                    Command(motor = leftTask, runType = 'RUN_ANGLE', speed = 300, value = 100, startPercent = 10, endPercent = 55),
-                    Command(motor = leftTask, runType = 'RUN_ANGLE', speed = 300, value = -100, startPercent = 80, endPercent = 90)
-                ])
+                brick.light.on(Color.RED)
+                leftDone = True
+                run += 1
+                showcaseOptions()
 
 
-                leftDone = True;
 
-        elif gamepad.wasJustPressed(Button.CENTER):
-            if not oneTimeUse or not middleDone:
-                #run 3
-                if zeroBeforeEveryRun:
-                    zero()
 
-                zero()    
-                toPositon(target = Pose(30, 0, 90), keepHeading = False, forwards = False)
-                toPositon(target = Pose(30, 30, 180), keepHeading = False, forwards = True)
-                toPositon(target = Pose(0, 30, -90), keepHeading = False, forwards = False)
-                toPositon(target = Pose(0, 0, 90), keepHeading = False, forwards = True) 
-                getPose()
-                    
 
-                middleDone = True;
-            
+        #run 3
         elif gamepad.wasJustPressed(Button.RIGHT):
-            if not oneTimeUse or not rightDone:
-                #run 4
+            if not oneTimeUse or (not rightDone and run == 3):
                 if zeroBeforeEveryRun:
                     zero()
+                brick.light.on(Color.GREEN)
+                printInProgress()
 
-                inCurve(Pose(30, 20, 0), keepHeading = False, listOfCommands = [ 
-                    Command(motor = leftTask, runType = 'RUN_ANGLE', speed = 300, value = 100, startPercent = 60, endPercent = 55)])
-                inCurve(Pose(-10, -20, -90))
-                turnDeg(-45)
-                inLineCM(30)
-                toPositon(Pose(0, 0, -90))
-                setPoseEstimate(Pose(0, 0, -90))
-                printPose()
-                print(' ')
-                updateAll()
-                printPose()
-                print(' ')
-                inLineCM(-30)
-                toPositon(Pose(50, 30, 45), forwards = False, listOfCommands = [ 
-                    Command(motor = leftTask, runType = 'RUN_ANGLE', speed = 300, value = -100, startPercent = 20, endPercent = 55)])
-                toPositon(Pose(0, 0, 0), forwards = False)
+                run3()
 
-                getPose()
-                printPose()
-
-
+                brick.light.on(Color.RED)
                 rightDone = True
-            
-        elif gamepad.wasJustPressed(Button.DOWN):
-            exit = False
+                run += 1
+                showcaseOptions()
 
-            while exit == False:
+
+
+
+        #run 4
+        elif gamepad.wasJustPressed(Button.DOWN):
+            if not oneTimeUse or (not downDone and run == 4):
+                if zeroBeforeEveryRun:
+                    zero()
+                brick.light.on(Color.GREEN)
+                printInProgress()
+
+                run4()
+
+                brick.light.on(Color.RED)
+                downDone = True
+                run += 1
+                showcaseOptions()
+
+
+
+            
+        elif gamepad.wasJustPressed(Button.CENTER):
+            exit = False
+            brick.screen.clear()
+            brick.screen.print('middle: ENTERED')
+            showcaseOptions(clear = False)
+
+            while not exit:
                 updateAll()
                 gamepad.updateButtons()
 
-
-                if gamepad.wasJustPressed(Button.UP):
+                if gamepad.wasJustPressed(Button.CENTER):
                     exit = True
 
-                elif gamepad.wasJustPressed(Button.LEFT):
-                    if not oneTimeUse or not downleftDone:
-                        #run 5
+
+                #run 5
+                if gamepad.wasJustPressed(Button.UP):
+                    if not oneTimeUse or (not middleUpDone and run == 5):
                         if zeroBeforeEveryRun:
                             zero()
+                        brick.light.on(Color.GREEN)
+                        printInProgress()
 
-                        leftTask.run_angle(500, -120)
+                        run5()
 
-                        downleftDone = True
+                        brick.light.on(Color.RED)
+                        middleUpDone = True
                         exit = True
+                        run += 1
+                        showcaseOptions()
                         
-                elif gamepad.wasJustPressed(Button.RIGHT):
-                    if not oneTimeUse or not downrightDone:
-                        #run 6
+
+
+
+                #run 6
+                elif gamepad.wasJustPressed(Button.LEFT):
+                    if not oneTimeUse or (not middleLeftDone and run == 6):  
                         if zeroBeforeEveryRun:
                             zero()
+                        brick.light.on(Color.GREEN)
+                        printInProgress()
 
-                        leftTask.run_angle(500, 120)
+                        run6()
 
-                        downrightDone = True
-                        exit = True  
+                        brick.light.on(Color.RED)
+                        middleLeftDone = True
+                        exit = True
+                        run += 1
+                        showcaseOptions()
 
+
+
+
+
+                #run 7
+                elif gamepad.wasJustPressed(Button.RIGHT):
+                    if not oneTimeUse or (not middleRightDone and run == 7):
+            
+                        if zeroBeforeEveryRun:
+                            zero()
+                        brick.light.on(Color.GREEN)
+                        printInProgress()
+
+                        run7()
+
+                        brick.light.on(Color.RED)
+                        middleRightDone = True
+                        exit = True
+                        run += 1
+                        showcaseOptions()
+
+
+
+
+                #run 8
+                elif gamepad.wasJustPressed(Button.DOWN):
+                    if not oneTimeUse or (not middleDownDone and run == 8):
+                        if zeroBeforeEveryRun:
+                            zero()
+                        brick.light.on(Color.GREEN)
+                        printInProgress()
+
+                        run8()
+
+                        brick.light.on(Color.RED)
+                        middleDownDone = True
+                        exit = True
+                        run += 1
+                        showcaseOptions()
+            
+            brick.screen.clear()
+            brick.screen.print('middle: EXITED')
+            showcaseOptions(clear = False)
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 #* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
