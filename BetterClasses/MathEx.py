@@ -26,7 +26,6 @@ class Pose(Point):
     def set(self, x, y, head):
         super().set(x, y)
         self.head = head 
-    
 
 
 
@@ -55,7 +54,7 @@ def normalizeRadians(rad):
     return rad   
 
 def toRadians(deg):
-    return deg * deg_2_rad
+   return deg * deg_2_rad
 
 def toDegrees(rad):
     return rad * rad_2_deg

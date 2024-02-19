@@ -71,11 +71,11 @@ brick = EV3Brick()
 brick.light.on(Color.RED)
 
 leftTask = Motor(ltPort, positive_direction = Direction.COUNTERCLOCKWISE)
-leftDrive = Motor(ldPort)
+leftDrive = Motor(ldPort, positive_direction = Direction.COUNTERCLOCKWISE)
 leftColor = ColorSensor(lcPort)
 
 rightTask = Motor(rtPort, positive_direction = Direction.COUNTERCLOCKWISE)
-rightDrive = Motor(rdPort)
+rightDrive = Motor(rdPort, positive_direction = Direction.COUNTERCLOCKWISE)
 rightColor = ColorSensor(rcPort)
 
 gyro = GyroSensor(gyroPort)
@@ -351,7 +351,7 @@ def turnDeg(deg, threshold = 0.1, sensitivity = 1):
 
 
     #calculating max time accorded
-    resetFailSwitch(normalizeTimeToTurn(abs(error)))
+    resetFailSwitch(normalizeTimeToTurn(abs(error)) / sensitivity)
 
 
     #derivative term local variables: D = Δe / Δt, where e = error and t = time)
@@ -394,6 +394,8 @@ def turnDeg(deg, threshold = 0.1, sensitivity = 1):
             isBusy = False
     
     #stop motors when done
+    leftDrive.dc(0)
+    rightDrive.dc(0)
     leftDrive.brake()
     rightDrive.brake()
 
@@ -457,6 +459,8 @@ def inLineCM(cm, threshold = 0.1, sensitivity = 1, correctHeading = True):
 
     
     #stop motors when done
+    leftDrive.dc(0)
+    rightDrive.dc(0)
     leftDrive.brake()
     rightDrive.brake()
 
@@ -481,7 +485,7 @@ COORDINATE REFERENCE FIELD:
                |   
 
 '''
-def toPositon(target, threshold = 0.1, sensitivity = 1,
+def toPosition(target, threshold = 0.1, sensitivity = 1, headSensitivity = 1, headThreshold = 0.1,
             keepHeading = False, forwards = True, correctHeading = True,
             listOfCommands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]):
     global botPose, leftDrive, rightDrive, isBusy, distance
@@ -567,10 +571,12 @@ def toPositon(target, threshold = 0.1, sensitivity = 1,
 
         
     if not keepHeading:
-        turnDeg(target.head)
+        turnDeg(target.head, sensitivity = headSensitivity, threshold = headThreshold)
         wait(100)
-        turnDeg(target.head)
+        turnDeg(target.head, sensitivity = headSensitivity, threshold = headThreshold)
 
+    leftDrive.dc(0)
+    rightDrive.dc(0)
     leftDrive.brake()
     rightDrive.brake()
 
@@ -655,6 +661,8 @@ def inCurve(target, keepHeading = False, left = False,
         turnDeg(target.head)
         turnDeg(target.head)
 
+    leftDrive.dc(0)
+    rightDrive.dc(0)
     leftDrive.brake()
     rightDrive.brake()
 
@@ -666,36 +674,140 @@ def inCurve(target, keepHeading = False, left = False,
 
 
 def run1():
-    wait(3000)
+    inLineCM(cm = 4.2, correctHeading = True, threshold = 2) 
+    turnDeg(-48)
+    inLineCM(cm = 28.9, correctHeading = True, threshold = 3)
+    rightTask.run_angle(500, rotation_angle = 200)
+    turnDeg(-48, sensitivity = 0.65)
+    inLineCM(cm = 22.5,  correctHeading = True, threshold = 5)
+    turnDeg(botPose.head - 6, sensitivity = 0.4, threshold = 0.2)
+    
+    leftTask.dc(-100)
+    wait(1700)
+    leftTask.dc(0)
+
+    inLineCM(cm = -17,  correctHeading = True, threshold = 13)
+    turnDeg(-52.7)
+    inLineCM(cm = -17, threshold = 8)
+    turnDeg(63)
+    inLineCM(cm = -21,  correctHeading = True, threshold = 2)
+    printPose()
+
+    setPoseEstimate(Pose(0, 0, botPose.head))
+    toPosition(Pose(12.9, -95.69, 90), headSensitivity = 9, forwards = False, threshold = 33, keepHeading = True)
+    turnDeg(70)
+    inLineCM(cm = 16, correctHeading = False, threshold = 3)
+    inLineCM(cm = -5, correctHeading = False, threshold = 1.2)
+    leftTask.run_angle(500, rotation_angle = 1199)
+
+    turnDeg(70)
+    turnDeg(70)
+    inLineCM(cm = - 87, threshold = 4)
+    
     return 0
 
 def run2():
-    wait(3000)
+    inLineCM(cm = 85, correctHeading = True, threshold = 50)
+
+    leftTask.run_until_stalled(-500, then = Stop.HOLD)
+
+    inLineCM(cm = -61, threshold = 54.5)
+    turnDeg(-36, threshold = 2)
+
+    leftTask.run_angle(500, rotation_angle = 100)
+    
+    turnDeg(-12)
+    inLineCM(cm = -75, threshold = 44)
+
     return 0
 
 def run3():
-    wait(3000)
+    inLineCM(cm = -5, threshold = 2.5)
+    turnDeg(33.5, threshold = 1)
+    inLineCM(cm = -47, correctHeading = True, threshold = 3)
+    inLineCM(cm = 2.5, correctHeading = False, threshold = 1)
+    turnDeg(65, sensitivity = 0.5)
+    inLineCM(cm = 50, correctHeading = False, threshold = 3)
     return 0
 
 def run4():
-    wait(3000)
+    inLineCM(cm = 30, correctHeading = True, threshold = 28, sensitivity = 1)
+    turnDeg(-8)
+    inLineCM(cm = 47, correctHeading = True, threshold = 14)
+    inLineCM(cm = -7, threshold = 4)
+    inLineCM(cm = 11, threshold = 6)
+
+    inLineCM(cm = -20, correctHeading = False, threshold = 2)
+
     return 0
 
 def run5():
-    wait(3000)
+    rightTask.hold()
+    turnDeg(37.8, sensitivity = 0.7)
+    inLineCM(cm = 130, threshold = 101.6)
+    turnDeg(0, sensitivity = 0.8)
+    inLineCM(cm = 130, threshold = 100)
+    turnDeg(34, sensitivity = 0.7)
+    inLineCM(cm = 130, correctHeading = True, threshold = 112.8)
+
+
+    inLineCM(cm = -60, correctHeading = True, threshold = 58.1)
+    turnDeg(108.9)
+    inLineCM(cm = -58.5, correctHeading = True, threshold = 43.9)
+
+    inLineCM(cm = 60, correctHeading = True, threshold = 48.5)
+    turnDeg(83)
+    inLineCM(cm = 80, correctHeading = True, threshold = 38)
+
+    turnDeg(botPose.head - 55)
+    inLineCM(cm = 80, correctHeading = True, threshold = 72)
+    rightTask.run_angle(500, rotation_angle = -100)
+
+    turnDeg(botPose.head + 10)
+    inLineCM(cm = -80, correctHeading = True, threshold = 61.8)
+    
+    turnDeg(-10)
+    inLineCM(cm = 80, correctHeading = True, threshold = 54)
+    inLineCM(cm = -80, correctHeading = False, threshold = 76)
+    inLineCM(cm = 80, correctHeading = False, threshold = 58)
+
+    setPoseEstimate(Pose(0, 0, 0))
+
+    inLineCM(cm = -80, correctHeading = True, threshold = 69)
+    turnDeg(50)
+    inLineCM(cm = 80, correctHeading = True, threshold = 20)
+
+    inLineCM(cm = -80, correctHeading = True, threshold = 77)
+    turnDeg(110, sensitivity = 0.8, threshold = 4)
+
+    inLineCM(cm = 80, correctHeading = True, threshold = 73)
+    turnDeg(95, threshold = 1.5)
+    inLineCM(cm = 80, correctHeading = True, threshold = 74)
+    turnDeg(60)
+    inLineCM(cm = 80, correctHeading = True, threshold = 70)
+    turnDeg(30)
+    inLineCM(cm = 80, correctHeading = True, threshold = 70)
+
+    
     return 0
 
 def run6():
-    wait(3000)
+    inLineCM(cm = 90, correctHeading = False, threshold = 49)
+    inLineCM(cm = -60, correctHeading = False, threshold = 43)
     return 0
 
 def run7():
-    wait(3000)
+    inLineCM(cm = 30, correctHeading = True, threshold = 28, sensitivity = 1)
+    turnDeg(7.35)
+    inLineCM(cm = 130, correctHeading = True, threshold = 43)
+
+    turnDeg(-24)
+    turnDeg(-24)
     return 0
 
 def run8():
-    wait(3000)
-    return 0
+
+   return 0
 
 
 
@@ -710,6 +822,7 @@ def run8():
 def loop():
     global upDone, leftDone, rightDone, downDone, middleUpDone, middleLeftDone, middleRightDone, middleDownDone
     global oneTimeUse, run
+    zero()
 
     showcaseOptions()
     while True:

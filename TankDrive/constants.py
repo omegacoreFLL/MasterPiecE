@@ -1,3 +1,4 @@
+
 from pybricks.parameters import Port
 import math
 
@@ -16,7 +17,7 @@ import math
 W = 15
 L = 19.9
 WHEEL_RADIUS = 4.3 / 2
-GEAR_RATIO = 1 # in / out
+GEAR_RATIO = 20 / 12 # in / out
 TICKS_PER_REVOLUTION = 360
 MAX_TICKS_PER_SECOND = 1020
 
@@ -24,7 +25,7 @@ MAX_VEL = 0 #cm / s
 MAX_ANGULAR_VEL = 0 #deg / s
 
 
-distanceBetweenWheels = 9.97
+distanceBetweenWheels = 12.97
 dW = distanceBetweenWheels / 2
 
 generalCurveMultiplier = 3
@@ -39,10 +40,10 @@ generalCurveMultiplier = 3
 #combined with values for a friction-based feedforward controller (basically you account for the low 
 #       values you give a motor, which in theory should make the robot move, but in reality the static 
 #       friction wins and it stays in place (which you don't want))
-kP_head = 1.97 * 1.15 #tune this
-kD_head = 4.75 * 2.05
-kS_head = 1.2
-kP_forw = 5.5
+kP_head = 1.97 * 2.15 #tune this
+kD_head = 4.75 * 3.95
+kS_head = 1.1
+kP_forw = 5.5 * 1.2
 kS_forw = 10
 
 
@@ -51,7 +52,7 @@ kS_forw = 10
 
 #'timeToTurn' 360 deg, to calculate the time for a set amount of degrees. Basically making it more efficient
 #       in case of something going wrong. 'failSwitchTime' is just a generic variable to be used as threshold
-timeToTurn = 5 #sec
+timeToTurn = 6 #sec
 timeRun1, timeRun2, timeRun3, timeRun4, timeRun5, timeRun6, timeRun7, timeRun8 = (
     0, 0, 0, 0, 0, 0, 0, 0)
 failSwitchTime = 0
@@ -84,7 +85,7 @@ upDone, leftDone, rightDone, downDone, middleUpDone, middleLeftDone, middleRight
 #I use this concept a lot, but in this case, those variables determine when all encoders, gyro value
 #       and position calculations should be reset to 0, for better accuracy
 zeroBeforeEveryMove, zeroBeforeEveryRun, zeroBeforeEveryTask, zeroBeforeMotors = False, True, False, False
-oneTimeUse = True
+oneTimeUse = False
 
 
 
