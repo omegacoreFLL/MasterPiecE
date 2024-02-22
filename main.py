@@ -71,11 +71,11 @@ brick = EV3Brick()
 brick.light.on(Color.RED)
 
 leftTask = Motor(ltPort, positive_direction = Direction.COUNTERCLOCKWISE)
-leftDrive = Motor(ldPort, positive_direction = Direction.COUNTERCLOCKWISE)
+leftDrive = Motor(ldPort)
 leftColor = ColorSensor(lcPort)
 
 rightTask = Motor(rtPort, positive_direction = Direction.COUNTERCLOCKWISE)
-rightDrive = Motor(rdPort, positive_direction = Direction.COUNTERCLOCKWISE)
+rightDrive = Motor(rdPort)
 rightColor = ColorSensor(rcPort)
 
 gyro = GyroSensor(gyroPort)
@@ -707,87 +707,95 @@ def run1():
     return 0
 
 def run2():
-    inLineCM(cm = 85, correctHeading = True, threshold = 50)
+    inLineCM(cm = 85, correctHeading = True, threshold = 51)
 
-    leftTask.run_until_stalled(-500, then = Stop.HOLD)
+    leftTask.run_until_stalled(500, then = Stop.HOLD)
 
-    inLineCM(cm = -61, threshold = 54.5)
-    turnDeg(-36, threshold = 2)
+    inLineCM(cm = -61, threshold = 55.5)
+    turnDeg(-70, threshold = 5)
+    turnDeg(-42, threshold = 5)
 
-    leftTask.run_angle(500, rotation_angle = 100)
+    leftTask.run_angle(-500, rotation_angle = 100)
     
-    turnDeg(-12)
+    turnDeg(-5, threshold = 2)
     inLineCM(cm = -75, threshold = 44)
 
     return 0
 
 def run3():
-    inLineCM(cm = -5, threshold = 2.5)
-    turnDeg(33.5, threshold = 1)
-    inLineCM(cm = -47, correctHeading = True, threshold = 3)
-    inLineCM(cm = 2.5, correctHeading = False, threshold = 1)
-    turnDeg(65, sensitivity = 0.5)
-    inLineCM(cm = 50, correctHeading = False, threshold = 3)
+    inLineCM(cm = -45, threshold = 41)
+    turnDeg(37.5, threshold = 1)
+    #turnDeg(34.5, threshold = 1)
+    print('deg', botPose.head)
+    inLineCM(cm = -50, correctHeading = True, threshold = 11.8)
+    inLineCM(cm = 2.5, correctHeading = False, threshold = 2)
+    setPoseEstimate(Pose(0,0,0))
+
+    turnDeg(30.5, sensitivity = 0.4, threshold = 9.5)
+
+    inLineCM(cm = 90, correctHeading = False, threshold = 43)
     return 0
 
 def run4():
     inLineCM(cm = 30, correctHeading = True, threshold = 28, sensitivity = 1)
-    turnDeg(-8)
-    inLineCM(cm = 47, correctHeading = True, threshold = 14)
-    inLineCM(cm = -7, threshold = 4)
-    inLineCM(cm = 11, threshold = 6)
+    turnDeg(-10)
+    inLineCM(cm = 97, correctHeading = True, threshold = 64)
+    turnDeg(30, threshold = 28 )
+    #inLineCM(cm = -47, threshold = 44)
+    #inLineCM(cm = 57, threshold = 46)
 
-    inLineCM(cm = -20, correctHeading = False, threshold = 2)
+    inLineCM(cm = -20, correctHeading = False, threshold = 10)
 
     return 0
 
 def run5():
-    rightTask.hold()
-    turnDeg(37.8, sensitivity = 0.7)
-    inLineCM(cm = 130, threshold = 101.6)
-    turnDeg(0, sensitivity = 0.8)
-    inLineCM(cm = 130, threshold = 100)
-    turnDeg(34, sensitivity = 0.7)
-    inLineCM(cm = 130, correctHeading = True, threshold = 112.8)
 
-
-    inLineCM(cm = -60, correctHeading = True, threshold = 58.1)
-    turnDeg(108.9)
-    inLineCM(cm = -58.5, correctHeading = True, threshold = 43.9)
-
-    inLineCM(cm = 60, correctHeading = True, threshold = 48.5)
-    turnDeg(83)
-    inLineCM(cm = 80, correctHeading = True, threshold = 38)
-
-    turnDeg(botPose.head - 55)
-    inLineCM(cm = 80, correctHeading = True, threshold = 72)
-    rightTask.run_angle(500, rotation_angle = -100)
-
-    turnDeg(botPose.head + 10)
-    inLineCM(cm = -80, correctHeading = True, threshold = 61.8)
+    #skateboard
+    inLineCM(cm = 50, threshold = 20)
+    turnDeg(-25)
+    inLineCM(cm = 90, threshold = 55)
+    turnDeg(4)
+    inLineCM(cm = 90, threshold = 76)
     
-    turnDeg(-10)
-    inLineCM(cm = 80, correctHeading = True, threshold = 54)
-    inLineCM(cm = -80, correctHeading = False, threshold = 76)
-    inLineCM(cm = 80, correctHeading = False, threshold = 58)
+    #back from skateboard
+    inLineCM(cm = -90, threshold = 86)
+    turnDeg(82.5)
 
-    setPoseEstimate(Pose(0, 0, 0))
+    #scene change
+    inLineCM(cm = -90, threshold = 76)
+    inLineCM(cm = 90, threshold = 82)
+    turnDeg(49)
 
-    inLineCM(cm = -80, correctHeading = True, threshold = 69)
+    #going to museum
+    inLineCM(cm = 90, threshold = 38)
+    turnDeg(-30)
+    inLineCM(cm = 90, threshold = 60)
+    inLineCM(cm = -90, threshold = 88)
+
+    #in museum stuff
+    turnDeg(15, sensitivity = 0.5, threshold = 1.5)
+    rightTask.run_angle(500, rotation_angle = -140)
+
+    #back from museum
+    inLineCM(cm = -90, threshold = 69)
+    turnDeg(-43, threshold = 2)
+
+    #pannels up
+    inLineCM(cm = 90, threshold = 50)
+    #inLineCM(cm = -90, threshold = 85)
+    #inLineCM(cm = 90, threshold = 69)
+
+    #going for flower
+    setPoseEstimate(Pose(0,0,0))
+    inLineCM(cm = -90, threshold = 75)
+    turnDeg(56)
+    inLineCM(cm = 120, threshold = 55)
+
+    #doing the flower
+    inLineCM(cm = -10, threshold = 2.5)
+    turnDeg(110, sensitivity = 0.8, threshold = 3)
+    inLineCM(cm = 90, threshold = 80)
     turnDeg(50)
-    inLineCM(cm = 80, correctHeading = True, threshold = 20)
-
-    inLineCM(cm = -80, correctHeading = True, threshold = 77)
-    turnDeg(110, sensitivity = 0.8, threshold = 4)
-
-    inLineCM(cm = 80, correctHeading = True, threshold = 73)
-    turnDeg(95, threshold = 1.5)
-    inLineCM(cm = 80, correctHeading = True, threshold = 74)
-    turnDeg(60)
-    inLineCM(cm = 80, correctHeading = True, threshold = 70)
-    turnDeg(30)
-    inLineCM(cm = 80, correctHeading = True, threshold = 70)
-
     
     return 0
 
@@ -798,7 +806,7 @@ def run6():
 
 def run7():
     inLineCM(cm = 30, correctHeading = True, threshold = 28, sensitivity = 1)
-    turnDeg(7.35)
+    turnDeg(-7)
     inLineCM(cm = 130, correctHeading = True, threshold = 43)
 
     turnDeg(-24)

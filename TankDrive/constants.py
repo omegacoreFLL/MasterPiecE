@@ -17,7 +17,7 @@ import math
 W = 15
 L = 19.9
 WHEEL_RADIUS = 4.3 / 2
-GEAR_RATIO = 20 / 12 # in / out
+GEAR_RATIO = 1 # in / out
 TICKS_PER_REVOLUTION = 360
 MAX_TICKS_PER_SECOND = 1020
 
@@ -25,7 +25,7 @@ MAX_VEL = 0 #cm / s
 MAX_ANGULAR_VEL = 0 #deg / s
 
 
-distanceBetweenWheels = 12.97
+distanceBetweenWheels = 9.97
 dW = distanceBetweenWheels / 2
 
 generalCurveMultiplier = 3
@@ -40,9 +40,9 @@ generalCurveMultiplier = 3
 #combined with values for a friction-based feedforward controller (basically you account for the low 
 #       values you give a motor, which in theory should make the robot move, but in reality the static 
 #       friction wins and it stays in place (which you don't want))
-kP_head = 1.97 * 2.15 #tune this
-kD_head = 4.75 * 3.95
-kS_head = 1.1
+kP_head = 1.97 * 1.25 #tune this
+kD_head = 4.75 * 3.35
+kS_head = 1
 kP_forw = 5.5 * 1.2
 kS_forw = 10
 
