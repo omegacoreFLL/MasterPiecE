@@ -674,36 +674,60 @@ def inCurve(target, keepHeading = False, left = False,
 
 
 def run1():
-    inLineCM(cm = 4.2, correctHeading = True, threshold = 2) 
-    turnDeg(-48)
-    inLineCM(cm = 28.9, correctHeading = True, threshold = 3)
-    rightTask.run_angle(500, rotation_angle = 200)
-    turnDeg(-48, sensitivity = 0.65)
-    inLineCM(cm = 22.5,  correctHeading = True, threshold = 5)
-    turnDeg(botPose.head - 6, sensitivity = 0.4, threshold = 0.2)
+    #going for the two experts
+    turnDeg(7.5)
+    turnDeg(7.5)
+    inLineCM(cm = 90, threshold = 59.69)
+    turnDeg(95, sensitivity = 0.22, threshold = 33)
+    turnDeg(95, sensitivity = 0.22, threshold = 33)
+    inLineCM(cm = 80, threshold = 69.9)
+    rightTask.run_angle(220, rotation_angle = -180)
+
+    #aligning
+    inLineCM(cm = 150, threshold = 136)
+    turnDeg(10)
+    inLineCM(cm = -5, threshold = 4)
+    inLineCM(cm = 50, threshold = 39)
+
+    leftTask.dc(100)
+    wait(1300)
+    leftTask.dc(0)
     
-    leftTask.dc(-100)
-    wait(1700)
+    inLineCM(cm = -10, threshold = 5, sensitivity = 0.6)
+    inLineCM(cm = -90, threshold = 80)
+    turnDeg(180)
+
+    #turnDeg(180)
+
+    inLineCM(cm = -140, threshold = 89)
+    turnDeg(109.1, sensitivity = 0.4, threshold = 40)
+    turnDeg(109.1)
+    inLineCM(cm = 17, threshold = 8, sensitivity = 0.6)
+    inLineCM(cm = -4, threshold = 3)
+    turnDeg(98.5)
+
+    leftTask.dc(100)
+    wait(2200)
     leftTask.dc(0)
 
-    inLineCM(cm = -17,  correctHeading = True, threshold = 13)
-    turnDeg(-52.7)
-    inLineCM(cm = -17, threshold = 8)
-    turnDeg(63)
-    inLineCM(cm = -21,  correctHeading = True, threshold = 2)
-    printPose()
+    inLineCM(cm = -15, threshold = 4)
+    turnDeg(172.5)
+    inLineCM(cm = -160, threshold = 58)
 
-    setPoseEstimate(Pose(0, 0, botPose.head))
-    toPosition(Pose(12.9, -95.69, 90), headSensitivity = 9, forwards = False, threshold = 33, keepHeading = True)
-    turnDeg(70)
-    inLineCM(cm = 16, correctHeading = False, threshold = 3)
-    inLineCM(cm = -5, correctHeading = False, threshold = 1.2)
-    leftTask.run_angle(500, rotation_angle = 1199)
+    '''inLineCM(cm = -10, threshold = 5)
 
-    turnDeg(70)
-    turnDeg(70)
-    inLineCM(cm = - 87, threshold = 4)
+    turnDeg(137)
+    inLineCM(cm = 7, threshold = 3.1)
     
+    leftTask.dc(100)
+    wait(2600)
+    leftTask.dc(0)
+
+    #to base
+    inLineCM(cm = -20, threshold = 10)
+    turnDeg(160)
+    inLineCM(cm = -120, threshold = 40)'''
+
     return 0
 
 def run2():
@@ -842,7 +866,7 @@ def loop():
 
         #run 1
         if gamepad.wasJustPressed(Button.UP):
-            if not upDone or (not oneTimeUse and run == 1):
+            if not oneTimeUse or (not upDone and run == 1):
                 if zeroBeforeEveryRun:
                     zero()
                 brick.light.on(Color.GREEN)
