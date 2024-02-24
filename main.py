@@ -192,7 +192,7 @@ def showcaseOptions(clear = True):
         brick.screen.clear()
         brick.screen.print('               ')
 
-    if run < 9:
+    if run < 8:
         brick.screen.print(' next run:', run)
         brick.screen.print('               ')
     else:
@@ -216,8 +216,8 @@ def showcaseOptions(clear = True):
         brick.screen.print(' MIDDLE + LEFT ')
     elif middleLeftDone and not middleRightDone:
         brick.screen.print(' MIDDLE + RIGHT ')
-    elif middleRightDone and not middleDownDone:
-        brick.screen.print(' MIDDLE + DOWN ')
+    #elif middleRightDone and not middleDownDone:
+    #    brick.screen.print(' MIDDLE + DOWN ')
 
 
 
@@ -257,6 +257,16 @@ def printInProgress():
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 #* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+def afterEveryRun():
+    global leftTask, rightTask, leftDrive, rightDrive
+
+    leftDrive.COAST()
+    rightDrive.COAST()
+    leftTask.COAST()
+    rightTask.COAST()
+
 
 #ignore these 2, no actual use
 def setOneTimeUse(otu):
@@ -699,39 +709,27 @@ def run1():
 
     #turnDeg(180)
 
-    inLineCM(cm = -140, threshold = 89)
+    inLineCM(cm = -140, threshold = 88.4)
     turnDeg(109.1, sensitivity = 0.4, threshold = 40)
     turnDeg(109.1)
-    inLineCM(cm = 17, threshold = 8, sensitivity = 0.6)
+    inLineCM(cm = 17, threshold = 6, sensitivity = 0.5)
     inLineCM(cm = -4, threshold = 3)
-    turnDeg(98.5)
+    turnDeg(97.5)
 
     leftTask.dc(100)
     wait(2200)
     leftTask.dc(0)
 
-    inLineCM(cm = -15, threshold = 4)
+    turnDeg(120)
+    inLineCM(cm = -15, threshold = 6)
     turnDeg(172.5)
     inLineCM(cm = -160, threshold = 58)
-
-    '''inLineCM(cm = -10, threshold = 5)
-
-    turnDeg(137)
-    inLineCM(cm = 7, threshold = 3.1)
-    
-    leftTask.dc(100)
-    wait(2600)
-    leftTask.dc(0)
-
-    #to base
-    inLineCM(cm = -20, threshold = 10)
-    turnDeg(160)
-    inLineCM(cm = -120, threshold = 40)'''
 
     return 0
 
 def run2():
     inLineCM(cm = 85, correctHeading = True, threshold = 51)
+    turnDeg(-4)
 
     leftTask.run_until_stalled(500, then = Stop.HOLD)
 
@@ -739,18 +737,17 @@ def run2():
     turnDeg(-70, threshold = 5)
     turnDeg(-42, threshold = 5)
 
-    leftTask.run_angle(-500, rotation_angle = 100)
+    leftTask.run_angle(-300, rotation_angle = 100)
     
     turnDeg(-5, threshold = 2)
-    inLineCM(cm = -75, threshold = 44)
+    inLineCM(cm = -75, threshold = 38)
 
     return 0
 
 def run3():
     inLineCM(cm = -45, threshold = 41)
-    turnDeg(37.5, threshold = 1)
-    #turnDeg(34.5, threshold = 1)
-    print('deg', botPose.head)
+    turnDeg(35, threshold = 1)
+
     inLineCM(cm = -50, correctHeading = True, threshold = 11.8)
     inLineCM(cm = 2.5, correctHeading = False, threshold = 2)
     setPoseEstimate(Pose(0,0,0))
@@ -765,8 +762,6 @@ def run4():
     turnDeg(-10)
     inLineCM(cm = 97, correctHeading = True, threshold = 64)
     turnDeg(30, threshold = 28 )
-    #inLineCM(cm = -47, threshold = 44)
-    #inLineCM(cm = 57, threshold = 46)
 
     inLineCM(cm = -20, correctHeading = False, threshold = 10)
 
@@ -806,18 +801,16 @@ def run5():
 
     #pannels up
     inLineCM(cm = 90, threshold = 50)
-    #inLineCM(cm = -90, threshold = 85)
-    #inLineCM(cm = 90, threshold = 69)
 
     #going for flower
     setPoseEstimate(Pose(0,0,0))
     inLineCM(cm = -90, threshold = 75)
-    turnDeg(56)
+    turnDeg(59)
     inLineCM(cm = 120, threshold = 55)
 
     #doing the flower
-    inLineCM(cm = -10, threshold = 2.5)
-    turnDeg(110, sensitivity = 0.8, threshold = 3)
+    inLineCM(cm = -10, threshold = 3)
+    turnDeg(105, sensitivity = 0.8, threshold = 3)
     inLineCM(cm = 90, threshold = 80)
     turnDeg(50)
     
@@ -830,16 +823,12 @@ def run6():
 
 def run7():
     inLineCM(cm = 30, correctHeading = True, threshold = 28, sensitivity = 1)
-    turnDeg(-7)
+    turnDeg(7.9)
     inLineCM(cm = 130, correctHeading = True, threshold = 43)
 
     turnDeg(-24)
     turnDeg(-24)
     return 0
-
-def run8():
-
-   return 0
 
 
 
@@ -878,6 +867,7 @@ def loop():
                 upDone = True
                 run += 1
                 showcaseOptions()
+                afterEveryRun()
 
 
 
@@ -896,6 +886,7 @@ def loop():
                 leftDone = True
                 run += 1
                 showcaseOptions()
+                afterEveryRun()
 
 
 
@@ -915,6 +906,7 @@ def loop():
                 rightDone = True
                 run += 1
                 showcaseOptions()
+                afterEveryRun()
 
 
 
@@ -933,6 +925,7 @@ def loop():
                 downDone = True
                 run += 1
                 showcaseOptions()
+                afterEveryRun()
 
 
 
@@ -966,6 +959,7 @@ def loop():
                         exit = True
                         run += 1
                         showcaseOptions()
+                        afterEveryRun()
                         
 
 
@@ -985,6 +979,7 @@ def loop():
                         exit = True
                         run += 1
                         showcaseOptions()
+                        afterEveryRun()
 
 
 
@@ -1006,26 +1001,9 @@ def loop():
                         exit = True
                         run += 1
                         showcaseOptions()
-
-
-
-
-                #run 8
-                elif gamepad.wasJustPressed(Button.DOWN):
-                    if not oneTimeUse or (not middleDownDone and run == 8):
-                        if zeroBeforeEveryRun:
-                            zero()
-                        brick.light.on(Color.GREEN)
-                        printInProgress()
-
-                        run8()
-
-                        brick.light.on(Color.RED)
-                        middleDownDone = True
-                        exit = True
-                        run += 1
-                        showcaseOptions()
+                        afterEveryRun()
             
+
             brick.screen.clear()
             brick.screen.print('middle: EXITED')
             showcaseOptions(clear = False)
