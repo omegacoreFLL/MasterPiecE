@@ -262,10 +262,10 @@ def printInProgress():
 def afterEveryRun():
     global leftTask, rightTask, leftDrive, rightDrive
 
-    leftDrive.COAST()
-    rightDrive.COAST()
-    leftTask.COAST()
-    rightTask.COAST()
+    leftDrive.stop()
+    rightDrive.stop()
+    leftTask.stop()
+    rightTask.stop()
 
 
 #ignore these 2, no actual use
@@ -685,44 +685,54 @@ def inCurve(target, keepHeading = False, left = False,
 
 def run1():
     #going for the two experts
-    turnDeg(7.5)
-    turnDeg(7.5)
-    inLineCM(cm = 90, threshold = 59.69)
-    turnDeg(95, sensitivity = 0.22, threshold = 33)
-    turnDeg(95, sensitivity = 0.22, threshold = 33)
-    inLineCM(cm = 80, threshold = 69.9)
+    '''turnDeg(9.5)
+    turnDeg(9.5)
+    inLineCM(cm = 90, threshold = 61.69)
+    turnDeg(93.7, sensitivity = 0.22, threshold = 33)
+    turnDeg(93.7, sensitivity = 0.22, threshold = 33)
+    inLineCM(cm = 80, threshold = 70.9)
     rightTask.run_angle(220, rotation_angle = -180)
 
     #aligning
-    inLineCM(cm = 150, threshold = 136)
+    inLineCM(cm = 150, threshold = 120)
     turnDeg(10)
     inLineCM(cm = -5, threshold = 4)
-    inLineCM(cm = 50, threshold = 39)
+    inLineCM(cm = 50, threshold = 37)'''
+
+    #skater
+    inLineCM(cm = 90, threshold = 65)
+    turnDeg(2)
+    inLineCM(cm = 9, threshold = 2)
+    rightTask.run_angle(220, rotation_angle = -180)
+    turnDeg(3)
+
+    inLineCM(cm = 150, threshold = 125)
+
 
     leftTask.dc(100)
-    wait(1300)
+    wait(2050)
     leftTask.dc(0)
+
+
     
-    inLineCM(cm = -10, threshold = 5, sensitivity = 0.6)
-    inLineCM(cm = -90, threshold = 80)
-    turnDeg(180)
+    inLineCM(cm = -10, threshold = 3.2, sensitivity = 0.6)
+    inLineCM(cm = -90, threshold = 67.69)
+    turnDeg(146)
 
-    #turnDeg(180)
+    inLineCM(cm = -140, threshold = 74.5)
+    turnDeg(71, sensitivity = 0.4, threshold = 30)
 
-    inLineCM(cm = -140, threshold = 88.4)
-    turnDeg(109.1, sensitivity = 0.4, threshold = 40)
-    turnDeg(109.1)
-    inLineCM(cm = 17, threshold = 6, sensitivity = 0.5)
-    inLineCM(cm = -4, threshold = 3)
-    turnDeg(97.5)
+    inLineCM(cm = 13, threshold = 6.8, sensitivity = 0.5)
+
+    turnDeg(40, sensitivity = 0.4, threshold = 5)
+    turnDeg(botPose.head + 7)
 
     leftTask.dc(100)
-    wait(2200)
+    wait(1600)
     leftTask.dc(0)
 
-    turnDeg(120)
-    inLineCM(cm = -15, threshold = 6)
-    turnDeg(172.5)
+    inLineCM(cm = -4, threshold = 2)
+    turnDeg(125)
     inLineCM(cm = -160, threshold = 58)
 
     return 0
@@ -746,13 +756,16 @@ def run2():
 
 def run3():
     inLineCM(cm = -45, threshold = 41)
-    turnDeg(35, threshold = 1)
+    turnDeg(36, threshold = 1)
+    turnDeg(36, threshold = 1)
 
-    inLineCM(cm = -50, correctHeading = True, threshold = 11.8)
-    inLineCM(cm = 2.5, correctHeading = False, threshold = 2)
+    inLineCM(cm = -50, correctHeading = True, threshold = 12.6)
+    inLineCM(cm = 1.5, correctHeading = False, threshold = 1.2)
     setPoseEstimate(Pose(0,0,0))
 
-    turnDeg(30.5, sensitivity = 0.4, threshold = 9.5)
+    turnDeg(9, threshold = 2)
+    wait(500)
+    turnDeg(30.5, sensitivity = 0.5, threshold = 9.5)
 
     inLineCM(cm = 90, correctHeading = False, threshold = 43)
     return 0
@@ -793,7 +806,7 @@ def run5():
 
     #in museum stuff
     turnDeg(15, sensitivity = 0.5, threshold = 1.5)
-    rightTask.run_angle(500, rotation_angle = -140)
+    rightTask.run_angle(350, rotation_angle = -140)
 
     #back from museum
     inLineCM(cm = -90, threshold = 69)
@@ -804,15 +817,17 @@ def run5():
 
     #going for flower
     setPoseEstimate(Pose(0,0,0))
-    inLineCM(cm = -90, threshold = 75)
-    turnDeg(59)
+    inLineCM(cm = -90, threshold = 80)
+    turnDeg(65.5)
     inLineCM(cm = 120, threshold = 55)
 
     #doing the flower
-    inLineCM(cm = -10, threshold = 3)
-    turnDeg(105, sensitivity = 0.8, threshold = 3)
-    inLineCM(cm = 90, threshold = 80)
+    inLineCM(cm = -12, threshold = 2.7)
+    turnDeg(109.8, sensitivity = 0.8, threshold = 3)
+    turnDeg(100)
+    inLineCM(cm = 90, threshold = 78)
     turnDeg(50)
+    turnDeg(100)
     
     return 0
 
