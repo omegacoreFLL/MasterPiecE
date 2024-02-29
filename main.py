@@ -728,7 +728,7 @@ def run1():
     turnDeg(botPose.head + 7)
 
     leftTask.dc(100)
-    wait(1600)
+    wait(2100)
     leftTask.dc(0)
 
     inLineCM(cm = -4, threshold = 2)

@@ -85,7 +85,7 @@ upDone, leftDone, rightDone, downDone, middleUpDone, middleLeftDone, middleRight
 #I use this concept a lot, but in this case, those variables determine when all encoders, gyro value
 #       and position calculations should be reset to 0, for better accuracy
 zeroBeforeEveryMove, zeroBeforeEveryRun, zeroBeforeEveryTask, zeroBeforeMotors = False, True, False, False
-oneTimeUse = True
+oneTimeUse = False
 
 
 
