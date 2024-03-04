@@ -810,7 +810,7 @@ def run5():
 
     #back from museum
     inLineCM(cm = -90, threshold = 69)
-    turnDeg(-43, threshold = 2)
+    turnDeg(-50, threshold = 2)
 
     #pannels up
     inLineCM(cm = 90, threshold = 50)
