@@ -9,7 +9,7 @@ def forwardKinematics(wheel_velocities: list):
     return Pose(
         (left + right) / 2,
         0,
-        (-left + right) / 2
+        (-left + right) / 2 * dW
     )
 
 def inverseKinematics(velocity: Pose):

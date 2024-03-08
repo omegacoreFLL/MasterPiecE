@@ -1,5 +1,5 @@
-
 from pybricks.parameters import Port
+
 import math
 
 #robot-specific constrains, which can be measured / searched up on google:
@@ -15,7 +15,7 @@ import math
 
 #cm
 W = 15
-L = 19.9
+L = 20
 WHEEL_RADIUS = 4.3 / 2
 GEAR_RATIO = 1 # in / out
 TICKS_PER_REVOLUTION = 360
@@ -40,12 +40,17 @@ generalCurveMultiplier = 3
 #combined with values for a friction-based feedforward controller (basically you account for the low 
 #       values you give a motor, which in theory should make the robot move, but in reality the static 
 #       friction wins and it stays in place (which you don't want))
-kP_head = 1.97 * 1.25 #tune this
-kD_head = 4.75 * 3.35
+kP_head = 1.97 * 1.65 #tune this
+kD_head = 4.75 * 11.35
 kS_head = 1
+
 kP_forw = 5.5 * 1.2
 kS_forw = 10
+kP_correction_agresive = 24
+kP_correction_mild = 4
+kD_correction = 0
 
+forward_threshold = 18 #cm
 
 
 
@@ -53,54 +58,22 @@ kS_forw = 10
 #'timeToTurn' 360 deg, to calculate the time for a set amount of degrees. Basically making it more efficient
 #       in case of something going wrong. 'failSwitchTime' is just a generic variable to be used as threshold
 timeToTurn = 6 #sec
-timeRun1, timeRun2, timeRun3, timeRun4, timeRun5, timeRun6, timeRun7, timeRun8 = (
-    0, 0, 0, 0, 0, 0, 0, 0)
 failSwitchTime = 0
 run = 1
 
 
 
-
-#here we are doing another drive optimisation. You know that motors do need current to run, so in code you
-#       specify the target current depending on some calculations. But if ev3's battery is low, it can't
-#       provide the current you want, so the motors will spin slower, and the robot will drive a smaller 
-#       distance. Accounting for this, we find the maximum battery capacity and we multiply the power with
-#       the ratio of max voltage over current voltage, so when the battery drops, the power aplied is 
-#       proportionally larger, so it'll be more consistent
-maxVoltage = 7.5 #volts
-
-
-
-
-
+maxVoltage = 7.9 #volts
+targetAngleValidation = 17
 
 #keeps account on which programs have been played before. Also if you're allowed to play them more than 1 time
 upDone, leftDone, rightDone, downDone, middleUpDone, middleLeftDone, middleRightDone, middleDownDone = (
     False, False, False, False, False, False, False, False)
 
-#some more boolean (True/False) variables, often referenced as 'flags', because they flag(show the user)
-#       if something should be done or not. It's a method of modularizing the code, which means the ability
-#       to change features really fast (in this case, whith a variable).
-#
-#I use this concept a lot, but in this case, those variables determine when all encoders, gyro value
-#       and position calculations should be reset to 0, for better accuracy
 zeroBeforeEveryMove, zeroBeforeEveryRun, zeroBeforeEveryTask, zeroBeforeMotors = False, True, False, False
 oneTimeUse = False
-
-
-
 
 #these contain the respective ports. If any wire management changes, change this ->
 ltPort, rtPort, ldPort, rdPort, gyroPort, lcPort, rcPort = (
     Port.B, Port.A, Port.C, Port.D, Port.S3, Port.S4, Port.S2
 )
-
-
-
-
-#calculates the provided time for completing a turn
-def normalizeTimeToTurn(deg):
-    return timeToTurn * deg / 360
-
-def encoderTicksToCM(ticks):
-    return ticks * GEAR_RATIO * 2 * math.pi * WHEEL_RADIUS / TICKS_PER_REVOLUTION

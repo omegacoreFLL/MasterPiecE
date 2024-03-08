@@ -16,6 +16,13 @@ class Point:
     def set(self, x, y):
         self.x = x 
         self.y = y 
+    
+    def rotateMatrix(self, angle):
+        copy = self.x
+        self.x = self.x * math.cos(angle) - self.y * math.sin(angle)
+        self.y = copy * math.sin(angle) - self.y * math.cos(angle)
+
+        return self
 
 
 class Pose(Point):
