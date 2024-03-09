@@ -45,12 +45,19 @@ kD_head = 4.75 * 11.35
 kS_head = 1
 
 kP_forw = 5.5 * 1.2
-kS_forw = 10
+kS_forw = 20
 kP_correction_agresive = 24
 kP_correction_mild = 4
 kD_correction = 0
 
+kP_interpolating = 4.2 #for pure pursuit, go to pose without turning first (curve motion)
+
 forward_threshold = 18 #cm
+minimum_power = 5
+
+turn_rate = 0.85 #line squaring
+left_on_line = 10
+right_on_line = 10
 
 
 

@@ -64,10 +64,10 @@ class TwoWheelLocalizer:
     
     def zeroPose(self):
         self.gyro_offset = -self.pose.head
-        self.pose = self.pastPose = Pose()
+        self.pose = self.pastPose = Pose(0, 0, 0)
 
-        self.pastPoseL, self.pastPoseR, self.pastAngle, self.pastTime, self.pastDistance, self.pastVel = [
-            self.poseL, self.poseR, self.angle, self.time, self.deltaDistance, self.vel ]
+        self.pastPoseL = self.pastPoseR = self.pastAngle = self.pastTime = self.pastDistance = self.pastVel = 0
+        self.poseL = self.poseR = self.angle = self.time = self.deltaDistance = self.vel = 0
 
     def zero(self):
         self.zeroEncoders()

@@ -12,6 +12,7 @@ import math
 from BetterClasses.MathEx import * 
 from BetterClasses.ButtonsEx import *
 from BetterClasses.MotorEx import *
+from BetterClasses.LedEx import *
 from TankDrive.odometry import *
 from TankDrive.constants import *
 
@@ -32,6 +33,10 @@ class robot:
         
         self.gamepad = ButtonEx()
         self.localizer = TwoWheelLocalizer(self.leftDrive, self.rightDrive, self.gyro, upside_down_gyro = True)
+
+        self.led_control = LedEx(self.brick)
+        self.led_control.build()
+
 
         self.failSwitchTimer = StopWatch()
         self.voltage = 0
@@ -60,6 +65,7 @@ class robot:
         return 0
 
 
+
     def setWheelPowers(self, left, right, sensitivity = 1, accelerating = False):
         self.leftDrive.dc(clipMotor(self.normalizeVoltage(left) * sensitivity))
         self.rightDrive.dc(clipMotor(self.normalizeVoltage(right) * sensitivity))
@@ -77,7 +83,6 @@ class robot:
             self.leftDrive.hold()
             self.rightDrive.hold()
 
-    
 
 
     def zeroTaskMotors(self, resetLeft = True, resetRight = True):
@@ -93,9 +98,6 @@ class robot:
         self.localizer.update()
         self.gamepad.updateButtons()
         
-    
-
-
 
 
     def getAngle(self):

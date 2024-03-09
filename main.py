@@ -23,21 +23,40 @@ omega = robot()
 
 while True:
     omega.update()
+    omega.led_control.not_started()
+
     if omega.gamepad.wasJustPressed(Button.UP):
         omega.localizer.zero()
+        omega.led_control.take_your_hands_off()
 
         wait(600)
 
-        #inLineCM(cm = 100, robot = omega, correctHeading = True, specified_angle = 0)
-        turnDeg(-90, omega)
-        '''omega.localizer.setPoseEstimate(Pose(0,0,0))
-        inLineCM(cm = -60, robot = omega, correctHeading = True, specified_angle = -45)
-        turnDeg(90, omega)
-        turnDeg(90, omega)'''
+        omega.led_control.in_progress()
+
+        inLineCM(60, omega, turnTangential = False, interpolating = True, tangential_angle = 90, sensitivity = 0.6,
+                    listOfCommands = [Command(motor = omega.leftTask, runType = "DC", speed = 100,
+                                        startPercent = 30, endPercent = 70),
+                                      Command(motor = omega.rightTask, runType = "DC", speed = 70,
+                                        startPercent = 10, endPercent = 50)])
+        omega.printPose()
+        toPosition(Pose(0, 0, 0), omega)
+
         omega.setDriveTo(Stop.COAST)
         omega.setDriveTo(Stop.COAST)
 
         omega.getPose()
+
+    if omega.gamepad.wasJustPressed(Button.DOWN):
+        omega.localizer.zero()
+        omega.led_control.take_your_hands_off()
+
+        wait(600)
+
+        omega.led_control.in_progress()
+
+        lineSquare(omega, time_threshold = 7)
+        
+        
     
 
 
@@ -48,103 +67,6 @@ while True:
     rightDrive.stop()
     leftTask.stop()
     rightTask.stop()
-
-
-def toPosition(target, threshold = 0.1, sensitivity = 1, headSensitivity = 1, headThreshold = 0.1,
-            keepHeading = False, forwards = True, correctHeading = True,
-            listOfCommands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]):
-    global botPose, leftDrive, rightDrive, isBusy, distance
-
-    queuedCommands = not (len(listOfCommands) > 10)
-    updateAll()
-
-    yError = target.x - botPose.x 
-    xError = target.y - botPose.y 
-    
-    if forwards:
-        rotationAngle = 90
-        sign = -1
-    else:
-        rotationAngle = -90
-        sign = 1
-    
-
-    pointError = rotateMatrix(yError, xError, toRadians(rotationAngle))
-
-    needToTravelDist = hypot(yError, xError)
-    turnAngle = -math.atan2(pointError.x, pointError.y)
-    deg = toDegrees(turnAngle)
-
-    if queuedCommands:
-        for com in listOfCommands:
-            com.startPercent = com.startPercent / 100 * needToTravelDist
-            com.endPercent = com.endPercent / 100 * needToTravelDist
-
-    #twice for better accuracy
-    turnDeg(deg)
-    wait(100)
-    turnDeg(deg)
-
-    isBusy = True 
-    isFirstLoop = True
-    zeroDistance()
-
-    pastError = 0
-    pastTime = 0
-    derivativeTimer = StopWatch()
-
-
-    while isBusy:
-        updateAll()
-
-        #separate value for heading correction, same logic as in -turnDeg- method
-        correction = 0
-        if correctHeading:
-            if (abs(botPose.head - deg) <= 360 - abs(botPose.head - deg)):
-                headError = botPose.head - deg
-            else: headError = -1 * (signum(botPose.head - deg) * 360 - (botPose.head - deg))
-            currentTime = derivativeTimer.time()
-            #this time don't break out of the loop if heading is right. just to nothing
-            #tho if heading is off, calculate the correction power
-            if abs(headError) > threshold and abs(pastError) <= threshold:
-                d = (headError - pastError) / (currentTime - pastTime)
-                correction = normalizeVoltage(headError * kP_head + d * kD_head)
-
-
-        error = abs(distance) - needToTravelDist
-
-        #if target is reached, stop
-        if abs(error) <= threshold:
-            isBusy = False
-        else:
-            #the power for going straight calculated by the controller, accounting for static friction too
-            #total power is the sum of the forward power and correction
-            power = -sign * (normalizeVoltage(-error * kP_forw) - signum(error) * kS_forw)
-        
-            leftDrive.dc(clipMotor(normalizeVoltage(power - correction) * sensitivity))
-            rightDrive.dc(clipMotor(normalizeVoltage(power + correction) * sensitivity))
-
-
-        if queuedCommands:
-            for com in listOfCommands:
-                if abs(abs(distance) - abs(com.startPercent)) < 1:
-                    com.start()
-                elif abs(abs(distance) - abs(com.endPercent)) < 1:
-                    com.stop()
-
-        
-    if not keepHeading:
-        turnDeg(target.head, sensitivity = headSensitivity, threshold = headThreshold)
-        wait(100)
-        turnDeg(target.head, sensitivity = headSensitivity, threshold = headThreshold)
-
-    leftDrive.dc(0)
-    rightDrive.dc(0)
-    leftDrive.brake()
-    rightDrive.brake()
-
-       
-
 
 
 
