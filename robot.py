@@ -17,7 +17,7 @@ from TankDrive.odometry import *
 from TankDrive.constants import *
 
 
-class robot:
+class Robot:
     def __init__(self):
         self.brick = EV3Brick()
 
@@ -41,6 +41,11 @@ class robot:
         self.failSwitchTimer = StopWatch()
         self.voltage = 0
         self.failSwitchTime = 0
+
+        self.lastLeftSpeed = 0
+        self.lastRightSpeed = 0
+        self.is_stopped = True
+        self.acceleration_timer = StopWatch()
     
 
 
@@ -62,13 +67,31 @@ class robot:
         self.brick.screen.print(message)
     
     def slewRateLimiter(self, targetSpeed):
-        return 0
+        if self.is_stopped:
+            self.acceleration_timer.reset()
+            self.is_stopped = False
+        
+        acceleration = (msToS(self.acceleration_timer.time()) / acceleration_interval) * acceleration_dc
+        if acceleration < targetSpeed:
+            return acceleration
+        return targetSpeed
+        
 
 
 
     def setWheelPowers(self, left, right, sensitivity = 1, accelerating = False):
+        if accelerating:
+            left = self.slewRateLimiter(left)
+            right = self.slewRateLimiter(right)
+
         self.leftDrive.dc(clipMotor(self.normalizeVoltage(left) * sensitivity))
         self.rightDrive.dc(clipMotor(self.normalizeVoltage(right) * sensitivity))
+
+        if left == 0 and right == 0:
+            self.is_stopped = True
+        else: self.is_stopped = False
+
+
     
     def setDriveTo(self,stop_type):
         if stop_type == Stop.COAST:        
@@ -118,6 +141,9 @@ class robot:
         print('x: ', self.localizer.getPoseEstimate().x)
         print('y: ', self.localizer.getPoseEstimate().y)
         print('deg: ', self.localizer.getPoseEstimate().head)
+
+    def printVel(self):
+        print('velocity: ', self.localizer.getVelocity() * 100)
 
     def showcaseInProgress(self):
         self.brick.screen.clear()

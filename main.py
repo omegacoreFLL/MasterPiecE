@@ -19,11 +19,42 @@ from robot import *
 
 import threading
 
-omega = robot()
+omega = Robot()
+loopTimer = StopWatch()
+startTime = 0
+endTime = 0
+
+
+def every_loop():
+    omega.update()
+
+def start_program():
+    global omega
+
+    if zeroBeforeEveryRun:
+        omega.localizer.zero()
+    
+    if takeHandsOff:
+        omega.led_control.take_your_hands_off()
+        wait(sToMs(time_to_take_hands_off))
+    
+    omega.showcaseInProgress()
+    omega.led_control.in_progress()
+
+def stop_program(run_boolean):
+    global omega
+
+    run_boolean = True
+    run += 1
+    omega.led_control.not_started()
+    omega.showcaseOptions()
+
 
 while True:
+    startTime = endTime
     omega.update()
     omega.led_control.not_started()
+    
 
     if omega.gamepad.wasJustPressed(Button.UP):
         omega.localizer.zero()
@@ -54,22 +85,56 @@ while True:
 
         omega.led_control.in_progress()
 
-        lineSquare(omega, time_threshold = 7)
-        
+        lineSquare(omega, time_threshold = 7, forwards = True)
+
+    
+    if omega.gamepad.wasJustPressed(Button.LEFT):
+        omega.localizer.zero()
+        omega.led_control.take_your_hands_off()
+
+        wait(600)
+
+        omega.led_control.in_progress()
+
+        lineFollow(omega, omega.leftColor, left_curve = True)
+    
+        omega.setDriveTo(Stop.COAST)
+        omega.setDriveTo(Stop.COAST)
+    
+    if omega.gamepad.wasJustPressed(Button.RIGHT):
+        omega.localizer.zero()
+        omega.led_control.take_your_hands_off()
+
+        wait(600)
+
+        omega.led_control.in_progress()
+
+        inLineCM(cm = 70, robot = omega, accelerating = True)
+        toPosition(Pose(0, 0, 0), omega, accelerating = True)
+    
+        omega.setDriveTo(Stop.COAST)
+        omega.setDriveTo(Stop.COAST)
+    
+    if omega.gamepad.wasJustPressed(Button.CENTER):
+        omega.led_control.take_your_hands_off()
+
+        wait(600)
+
+        omega.led_control.in_progress()
+
+        toPosition(Pose(0, 0, 0), omega, accelerating = True)
+    
+        omega.setDriveTo(Stop.COAST)
+        omega.setDriveTo(Stop.COAST)
+    
+    endTime = loopTimer.time()
+    print("loop time", secondsToMilliseconds / (endTime - startTime))
+
         
     
 
 
-'''def afterEveryRun():
-    global leftTask, rightTask, leftDrive, rightDrive
-
-    leftDrive.stop()
-    rightDrive.stop()
-    leftTask.stop()
-    rightTask.stop()
-
-
-
+'''
 def inCurve(target, keepHeading = False, left = False,
                 listOfCommands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]):
     global botPose, dW, leftDrive, rightDrive, isBusy, distance
@@ -143,13 +208,6 @@ def inCurve(target, keepHeading = False, left = False,
     rightDrive.dc(0)
     leftDrive.brake()
     rightDrive.brake()
-
-
-
-# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-#* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-
 
 def run1():
     #skater
@@ -298,16 +356,6 @@ def run7():
     turnDeg(-24)
     return 0
 
-
-
-
-# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-#* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-
-
-#main loop, which exits only if the 'back' button is pressed on the brick
-#we check what button was pressed to know which program should run. Right now used only for testing
 def loop():
     global upDone, leftDone, rightDone, downDone, middleUpDone, middleLeftDone, middleRightDone, middleDownDone
     global oneTimeUse, run
@@ -475,12 +523,5 @@ def loop():
             brick.screen.clear()
             brick.screen.print('middle: EXITED')
             showcaseOptions(clear = False)
-
-# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-#* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-
-#Actual code goes here ----> (asta-i sageata in jos lmao)
-loop() 
 '''
 

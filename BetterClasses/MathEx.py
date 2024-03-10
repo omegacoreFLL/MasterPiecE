@@ -79,6 +79,9 @@ def signum(x):
 def msToS(ms):
     return ms / 1000
 
+def sToMs(sec):
+    return s * 1000
+
 def clipMotor(value):
     if value < -100:
         value = -100

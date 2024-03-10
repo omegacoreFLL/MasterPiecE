@@ -1,11 +1,13 @@
 from TankDrive.constants import *
 from BetterClasses.MathEx import *
 from pybricks.tools import StopWatch, wait
+from pybricks.ev3devices import ColorSensor
 from pybricks.parameters import Stop
+from robot import *
 
 #calculates time for completing a turn
 def normalizeTimeToTurn(deg):
-    return timeToTurn * deg / 360
+    return abs(timeToTurn * deg / 360)
 
 
 def turnRad(rad, robot, threshold = 0.1, sensitivity = 1):
@@ -14,6 +16,18 @@ def turnRad(rad, robot, threshold = 0.1, sensitivity = 1):
 def turnDeg(deg, robot, 
             threshold = 0.1, 
             sensitivity = 1):
+
+    if not isinstance(deg, float) and not isinstance(deg, int):
+        raise Exception("not a valid 'deg' ----- needed type: float / int")
+    if not isinstance(robot, Robot):
+        raise Exception("not a Robot instance")
+    if not isinstance(threshold, float) and not isinstance(threshold, int):
+        raise Exception("not a valid 'threshold' ----- needed type: float / int")
+    if not isinstance(sensitivity, float) and not isinstance(sensitivity, int):
+        raise Exception("not a valid 'sensitivity' ----- needed type: float / int")
+    
+    threshold = abs(threshold)
+    sensitivity = abs(sensitivity)
 
     isBusy = True
 
@@ -73,9 +87,32 @@ def turnDeg(deg, robot,
 def inLineCM(cm, robot, 
             threshold = 0.1, 
             sensitivity = 1, 
-            correctHeading = True, turnTangential = True, interpolating = False,
+            correctHeading = True, turnTangential = True, 
+            interpolating = False, accelerating = False,
             tangential_angle = None, #default val
             listOfCommands = None):
+    
+    if not isinstance(cm, int) and not isinstance(cm, float):
+        raise Exception("not a valid 'cm' ----- needed type: float / int")
+    if not isinstance(robot, Robot):
+        raise Exception("not an instance of Robot")
+    if not isinstance(threshold, float) and not isinstance(threshold, int):
+        raise Exception("not a valid 'threshold' ----- needed type: float / int")
+    if not isinstance(sensitivity, float) and not isinstance(sensitivity, int):
+        raise Exception("not a valid 'sensitivity' ----- needed type: float / int")
+    if not isinstance(correctHeading, bool):
+        raise Exception("not a valid 'correctHeading' ----- needed type: bool")
+    if not isinstance(turnTangential, bool):
+        raise Exception("not a valid 'turnTangential' ----- needed type: bool")
+    if not isinstance(interpolating, bool):
+        raise Exception("not a valid 'interpolating' ----- needed type: bool")
+    if not isinstance(accelerating, bool):
+        raise Exception("not a valid 'accelerating' ----- needed type: bool")
+    if not isinstance(tangential_angle, float) and not isinstance(tangential_angle, int) and not tangential_angle == None:
+        raise Exception("not a valid 'tangential_angle' ----- needed type: float / int")
+    
+    threshold = abs(threshold)
+    sensitivity = abs(sensitivity)
 
     queuedCommands = not (listOfCommands == None)
     isBusy = True
@@ -91,6 +128,9 @@ def inLineCM(cm, robot,
 
     if queuedCommands:
         for command in listOfCommands:
+            if not isinstance(command, Command):
+                raise Exception("not a Command instance")
+
             command.startPercent = command.startPercent / 100 * cm
             command.endPercent = command.endPercent / 100 * cm
     
@@ -137,7 +177,8 @@ def inLineCM(cm, robot,
             isBusy = False
         else:
             power = robot.normalizeVoltage(-error * kP_forw) + signum(cm) * kS_forw
-            robot.setWheelPowers(left = power - correction, right = power + correction, sensitivity = sensitivity)
+            robot.setWheelPowers(left = power - correction, right = power + correction, 
+                                sensitivity = sensitivity, accelerating = accelerating)
         
         if queuedCommands:
             for command in listOfCommands:
@@ -156,9 +197,39 @@ def inLineCM(cm, robot,
 def toPosition(target, robot, 
             threshold = 0.1, headThreshold = 0.1, 
             sensitivity = 1, headSensitivity = 1,
-            keepHeading = False, forwards = True, correctHeading = True, interpolating = False,
+            keepHeading = False, forwards = True, correctHeading = True, 
+            interpolating = False, accelerating = False,
             listOfCommands = None):
+    
 
+    if not isinstance(target, Pose):
+        raise Exception("not an instance of Pose")
+    if not isinstance(robot, Robot):
+        raise Exception("not an instance of Robot")
+    if not isinstance(threshold, float) and not isinstance(threshold, int):
+        raise Exception("not a valid 'threshold' ----- needed type: float / int")
+    if not isinstance(headThreshold, float) and not isinstance(headThreshold, int):
+        raise Exception("not a valid 'headThreshold' ----- needed type: float / int")
+    if not isinstance(sensitivity, float) and not isinstance(sensitivity, int):
+        raise Exception("not a valid 'sensitivity' ----- needed type: float / int")
+    if not isinstance(headSensitivity, float) and not isinstance(headSensitivity, int):
+        raise Exception("not a valid 'headSensitivity' ----- needed type: float / int")
+    if not isinstance(keepHeading, bool):
+        raise Exception("not a valid 'keepHeading' ----- needed type: bool")
+    if not isinstance(forwards, bool):
+        raise Exception("not a valid 'forwards' ----- needed type: bool")
+    if not isinstance(correctHeading, bool):
+        raise Exception("not a valid 'correctHeading' ----- needed type: bool")
+    if not isinstance(interpolating, bool):
+        raise Exception("not a valid 'interpolating' ----- needed type: bool")
+    if not isinstance(accelerating, bool):
+        raise Exception("not a valid 'acccelerating' ----- needed type: bool")
+    
+    threshold = abs(threshold)
+    headThreshold = abs(headThreshold)
+    sensitivity = abs(sensitivity)
+    headSensitivity = abs(headSensitivity)
+    
     #multitasking?
     queuedCommands = not (listOfCommands == None)
     robot.update()
@@ -184,6 +255,9 @@ def toPosition(target, robot,
     #relate command intervals to distance intervals
     if queuedCommands:
         for command in listOfCommands:
+            if not isinstance(command, Command):
+                raise Exception("not a Command instance")
+
             command.startPercent = command.startPercent / 100 * needToTravelDist
             command.endPercent = command.endPercent / 100 * needToTravelDist
 
@@ -227,7 +301,8 @@ def toPosition(target, robot,
             isBusy = False
         else:
             power = -sign * (-error * kP_forw - signum(error) * kS_forw)
-            robot.setWheelPowers(left = power - correction, right = power + correction, sensitivity = sensitivity)
+            robot.setWheelPowers(left = power - correction, right = power + correction, 
+                                sensitivity = sensitivity, accelerating = accelerating)
 
         if queuedCommands:
             for command in listOfCommands:
@@ -248,10 +323,37 @@ def toPosition(target, robot,
 def lineSquare(robot,
                 sensitivity = 1,
                 backing_distance = 0.7, success_threshold = 1,
-                forwards = True, 
+                forwards = True, accelerating = False,
                 time_threshold = None):
 
+    if not isinstance(robot, Robot):
+        raise Exception("not a robot instance")
+    if not isinstance(sensitivity, float) and not isinstance(sensitivity, int):
+        raise Exception("not a valid 'sensitivity' ----- needed type: float / int")
+    if not isinstance(backing_distance, float) and not isinstance(backing_distance, int):
+        raise Exception("not a valid 'backing_distance' ----- needed type: float / int")
+    if not isinstance(success_threshold, int):
+        raise Exception("not a valid 'success_threshold' ----- needed type: int")
+    if not isinstance(forwards, bool):
+        raise Exception("not a valid 'forwards' ----- needed type: bool")
+    if not isinstance(accelerating, bool):
+        raise Exception("not a valid 'accelerating' ----- needed type: bool")
+    if not isinstance(time_threshold, float) and not isinstance(time_threshold, int) and not success_threshold == None:
+        raise Exception("not a valid 'time_threshold' ----- needed type: float")
+    
+    robot.update()
+    pose = robot.localizer.getPoseEstimate()
+    deg = normalizeDegrees(pose.head)
+    
+    sensitivity = abs(sensitivity)
+    success_threshold = abs(success_threshold)
+    time_threshold = abs(time_threshold)
+    backing_distance = abs(backing_distance)
+
     timer = StopWatch()
+    derivativeTimer = StopWatch()
+    pastError = 0
+    pastTime = 0
 
     if forwards:
         direction = 1
@@ -262,16 +364,33 @@ def lineSquare(robot,
 
     times_reached = 0
     reached_line = False
+    correction = 0
 
     timer.reset()
     while not exitByTime and not exitBySuccess:
         robot.update()
+        pose = robot.localizer.getPoseEstimate()
+        robot.printVel()
 
         if times_reached > 0:
             forward_sensitivity = 0.7
         else: forward_sensitivity = sensitivity
 
-        robot.setWheelPowers(100, 100, sensitivity = forward_sensitivity)
+        if not reached_line:
+            if (abs(pose.head - deg) <= 360 - abs(pose.head - deg)):
+                headError = pose.head - deg
+            else: headError = -1 * (signum(pose.head - deg) * 360 - (pose.head - deg))
+
+            currentTime = derivativeTimer.time()
+
+            if abs(headError) > 0.1:
+                d = (headError - pastError) / (currentTime - pastTime)
+
+                correction = robot.normalizeVoltage(headError * kP_head_lf + d * kD_head_lf)
+        else: correction = 0
+
+        robot.setWheelPowers(100 * direction - correction, 100 * direction + correction, 
+                            sensitivity = forward_sensitivity, accelerating = accelerating)
 
         left_reading = robot.leftColor.reflection()
         right_reading = robot.rightColor.reflection()
@@ -279,9 +398,9 @@ def lineSquare(robot,
         actual_turn_rate = abs(left_reading - right_reading) * turn_rate
 
         if left_reading >= left_on_line and right_reading <= right_on_line:
-            inLineCM(cm = - abs(backing_distance) - 1, robot = robot, threshold = 1, 
+            inLineCM(cm = (- abs(backing_distance) - 1) * direction, robot = robot, threshold = 1, 
                     sensitivity = 0.7, turnTangential = False)
-            turnDeg(robot.localizer.getPoseEstimate().head + abs(actual_turn_rate), robot)
+            turnDeg(robot.localizer.getPoseEstimate().head + direction * abs(actual_turn_rate), robot)
 
             if not reached_line:
                 timer.reset()
@@ -289,9 +408,9 @@ def lineSquare(robot,
 
 
         elif left_reading <= left_on_line and right_reading >= right_on_line:
-            inLineCM(cm = - abs(backing_distance) - 1, robot = robot, threshold = 1, 
+            inLineCM(cm = (- abs(backing_distance) - 1) * direction, robot = robot, threshold = 1, 
                     sensitivity = 0.7, turnTangential = False)
-            turnDeg(robot.localizer.getPoseEstimate().head - abs(actual_turn_rate), robot)
+            turnDeg(robot.localizer.getPoseEstimate().head - direction * abs(actual_turn_rate), robot)
 
             if not reached_line:
                 timer.reset()
@@ -302,7 +421,7 @@ def lineSquare(robot,
             times_reached = times_reached + 1
 
             if times_reached < success_threshold:
-                inLineCM(cm = - abs(backing_distance) - 1, robot = robot,  threshold = 1, 
+                inLineCM(cm = (- abs(backing_distance) - 1) * direction, robot = robot,  threshold = 1, 
                         sensitivity = 0.7, turnTangential = False)
             else: 
                 exitBySuccess = True
@@ -322,7 +441,71 @@ def lineSquare(robot,
     robot.setWheelPowers(0, 0)
     robot.setDriveTo(Stop.BRAKE)
         
+def lineFollow(robot, sensor,
+                sensitivity = 1, time = 10,
+                forwards = True, left_curve = True):
+    
+    if not isinstance(robot, Robot):
+        raise Exception("not an instance of Robot")
+    if not isinstance(sensor, ColorSensor):
+        raise Exception("not an instance of ColorSensor")
+    if not isinstance(sensitivity, float) and not isinstance(sensitivity, int):
+        raise Exception("not a valid 'sensitivity' ----- needed type: float / int")
+    if not isinstance(time, float) and not isinstance(time, int):
+        raise Exception("not a valid 'time' ----- needed type: float / int")
+    if not isinstance(forwards, bool):
+        raise Exception("not a valid 'forwards' ----- needed type: bool")
+    if not isinstance(left_curve, bool):
+        raise Exception("not a valid 'left_curve' ----- needed type: bool")
+    
+    sensitivity = abs(sensitivity)
+    time = abs(time)
+
+    timer = StopWatch()
+
+    pastError = 0
+    pastTime = 0
+    derivativeTimer = StopWatch()
+    integral = 0
+
+    if forwards:
+        forward_direction = 1
+    else: forward_direction = -1
+
+    if left_curve:
+        turn_direction = 1
+    else: turn_direction = -1
+
+    forwardSpeed = 60 * forward_direction * sensitivity
+
+    exitByTime = False
+    timer.reset()
+    while not exitByTime:
+        robot.update()
+        reading = sensor.reflection()
+
+        error = reading - on_edge
+        integral = integral + error
+
+        currentTime = derivativeTimer.time()
+        d = (error - pastError) / (currentTime - pastTime)
+  
+        pastTime = currentTime
+        pastError = error
+
+        turnSpeed = (error * kP_line_follow + d * kD_line_follow + integral * kI_line_follow) * turn_direction 
+        print(turnSpeed)
+
+        robot.setWheelPowers(left = forwardSpeed - turnSpeed, right = forwardSpeed + turnSpeed)
+
+        if msToS(timer.time()) > time:
+            exitByTime = True
+    
+
+    robot.setWheelPowers(0, 0)
+    robot.setDriveTo(Stop.BRAKE)
         
+
 
         
 
