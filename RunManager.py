@@ -195,7 +195,7 @@ def loop():
 run_list = [Run(Button.UP, function = dummy, oneTimeUse = oneTimeUse),
             Run(Button.LEFT, function = dummy, oneTimeUse = oneTimeUse),
             Run(Button.RIGHT, function = dummy, oneTimeUse = oneTimeUse),
-            Run(Button.LEFT, function = dummy, oneTimeUse = oneTimeUse)]
+            Run(Button.DOWN, function = dummy, oneTimeUse = oneTimeUse)]
 
 core.run_control.addRunList(run_list)
 core.run_control.addBeforeEveryRun(function = start_run)

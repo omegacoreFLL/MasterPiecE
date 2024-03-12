@@ -1,10 +1,10 @@
 from pybricks.parameters import Button, Color
+from pybricks.tools import wait
 from TankDrive.constants import *
 import math
 
 
-#change generals here
-start_run_button = Button.CENTER
+default_start_run_button = Button.CENTER
 run_colors = [Color.GREEN, Color.WHITE, Color.BROWN, Color.RED, Color.YELLOW, Color.BLACK, Color.ORANGE, Color.BLUE]
 
 class Run():
@@ -38,6 +38,9 @@ class Run():
             self.runs +=1
             self.function()
         self.running = False
+    
+    def done(self):
+        return self.oneTimeUse and self.runs > 0
     
 
 
@@ -118,6 +121,11 @@ class RunController():
         return run_number > 4
 
     def __updateManual(self):
+        #skip update when done
+        if self.done():
+            self.__showcaseNextRun()
+            return 0
+        
         self.gamepad.updateButtons()
 
         if self.gamepad.wasJustPressed(Button.CENTER):
@@ -186,6 +194,8 @@ class RunController():
             self.telemetry.addData("                  ")
             self.telemetry.addData("    DONE    ")
             self.telemetry.addData("     <3         ")
+
+            wait(1000)
             return 0
         
         next_run = self.run_list[self.next_run - 1]
@@ -199,6 +209,12 @@ class RunController():
         self.telemetry.addData(next_run.button)
 
     def done(self):
-        return self.all_oneTimeUse and self.run_loops > 0
+        done = True
+
+        for run in self.run_list:
+            if not run.done():
+                done = False
+        
+        return done
 
 
