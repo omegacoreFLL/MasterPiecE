@@ -9,7 +9,6 @@ from robot import *
 def normalizeTimeToTurn(deg):
     return abs(timeToTurn * deg / 360)
 
-
 def turnRad(rad, robot, threshold = 0.1, sensitivity = 1):
     turnDeg(toDegrees(normalizeRadians(rad)), robot, threshold, sensitivity)
 
@@ -140,6 +139,7 @@ def inLineCM(cm, robot,
 
     pastError = 0
     pastTime = 0
+    headError = 0
     derivativeTimer = StopWatch()
 
     robot.localizer.zeroDistance()
@@ -370,7 +370,6 @@ def lineSquare(robot,
     while not exitByTime and not exitBySuccess:
         robot.update()
         pose = robot.localizer.getPoseEstimate()
-        robot.printVel()
 
         if times_reached > 0:
             forward_sensitivity = 0.7

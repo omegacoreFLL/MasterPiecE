@@ -24,7 +24,6 @@ class Point:
 
         return self
 
-
 class Pose(Point):
     def __init__(self, x = 0, y = 0, head = 0):
         super().__init__(x, y)
@@ -33,7 +32,6 @@ class Pose(Point):
     def set(self, x, y, head):
         super().set(x, y)
         self.head = head 
-
 
 
 
@@ -80,7 +78,7 @@ def msToS(ms):
     return ms / 1000
 
 def sToMs(sec):
-    return s * 1000
+    return sec * 1000
 
 def clipMotor(value):
     if value < -100:

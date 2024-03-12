@@ -10,8 +10,8 @@ from pybricks.media.ev3dev import SoundFile, ImageFile
 
 
 class ButtonEx:
-    def __init__(self):
-        self.brick = EV3Brick()
+    def __init__(self, brick):
+        self.brick = brick
 
         self.pressedButtons = []
 
@@ -22,7 +22,7 @@ class ButtonEx:
         self.fallLeft = self.fallRight = self.fallUp = self.fallDown = self.fallCenter = False
         self.isLeft = self.isRight = self.isUp = self.isDown = self.isCenter = False
 
-    def updateInitial(self):
+    def __updateInitial(self):
 
         self.left = self.right = self.up = self.down = self.center = False
         self.pressedButtons = self.brick.buttons.pressed()
@@ -40,7 +40,7 @@ class ButtonEx:
                 elif b == Button.CENTER:
                     self.center = True
 
-    def updateRisingEdge(self):
+    def __updateRisingEdge(self):
         self.riseLeft = self.riseRight = self.riseUp = self.riseDown = self.riseCenter = False
 
         if self.left and not self.pastLeft:
@@ -58,7 +58,7 @@ class ButtonEx:
         if self.center and not self.pastCenter:
             self.riseCenter = True
 
-    def updateFallingEdge(self):
+    def __updateFallingEdge(self):
         self.fallLeft = self.fallRight = self.fallUp = self.fallDown = self.fallCenter = False
 
         if not self.left and self.pastLeft:
@@ -76,7 +76,7 @@ class ButtonEx:
         if not self.center and self.pastCenter:
             self.fallCenter = True
 
-    def updateIsPressed(self):
+    def __updateIsPressed(self):
         self.isLeft = self.isRight = self.isUp = self.isDown = self.isCenter = False
 
         if self.left and self.pastLeft:
@@ -94,17 +94,21 @@ class ButtonEx:
         if self.center and self.pastCenter:
             self.isCenter = True
 
-    def updateFinal(self):
+    def __updateFinal(self):
         self.pastLeft, self.pastRight, self.pastUp, self.pastDown, self.pastCenter = (
             self.left, self.right, self.up, self.down, self.center
         )
 
+
+
     def updateButtons(self):
-        self.updateInitial()
-        self.updateRisingEdge()
-        self.updateIsPressed()
-        self.updateFallingEdge()
-        self.updateFinal()
+        self.__updateInitial()
+        self.__updateRisingEdge()
+        self.__updateIsPressed()
+        self.__updateFallingEdge()
+        self.__updateFinal()
+
+
 
     def wasJustPressed(self, b):
         if b == Button.LEFT:

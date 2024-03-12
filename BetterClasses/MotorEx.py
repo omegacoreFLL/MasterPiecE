@@ -25,10 +25,22 @@ class Action:
             self.RUN_UNTIL_STALLED = True
         elif action == 'DC':
             self.DC = True
-
+        else: raise Exception("""not a valid run type. Choose one of these options:
+                            - RUN
+                            - RUN_TIME
+                            - RUN_ANGLE
+                            - RUN_TARGET
+                            - RUN_UNTIL_STALLED
+                            - DC
+        """)
 
 class Command:
-    def __init__(self, motor: Motor, runType, speed, startPercent, value = 0, oneTimeUse = False, endPercent = 100):
+    def __init__(self, motor, runType, speed, startPercent, value = 0, oneTimeUse = False, endPercent = 100):
+        if not isinstance(motor, Motor):
+            raise Exception("not a Motor instance")
+        if not isinstance(runType, Action):
+            raise Exception("not an Action instance")
+
         self.motor = motor
         self.runType = runType
         self.value = value

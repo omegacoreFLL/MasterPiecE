@@ -13,8 +13,10 @@ from BetterClasses.MathEx import *
 from BetterClasses.ButtonsEx import *
 from BetterClasses.MotorEx import *
 from BetterClasses.LedEx import *
+from BetterClasses.TelemetryEx import *
 from TankDrive.odometry import *
 from TankDrive.constants import *
+from Controllers.RunController import *
 
 
 class Robot:
@@ -31,12 +33,13 @@ class Robot:
 
         self.gyro = GyroSensor(gyroPort)
         
-        self.gamepad = ButtonEx()
+        self.gamepad = ButtonEx(self.brick)
+        self.telemetry = Telemetry(self.brick)
+        self.run_control = RunController(self.gamepad, self.brick, self.telemetry)
         self.localizer = TwoWheelLocalizer(self.leftDrive, self.rightDrive, self.gyro, upside_down_gyro = True)
 
         self.led_control = LedEx(self.brick)
-        self.led_control.build()
-
+        self.led_control.addTakeYourHandsOffColor(None).build()
 
         self.failSwitchTimer = StopWatch()
         self.voltage = 0
@@ -63,7 +66,7 @@ class Robot:
             return True 
         return False
     
-    def telemetry(self, *message):
+
         self.brick.screen.print(message)
     
     def slewRateLimiter(self, targetSpeed):
@@ -90,8 +93,6 @@ class Robot:
         if left == 0 and right == 0:
             self.is_stopped = True
         else: self.is_stopped = False
-
-
     
     def setDriveTo(self,stop_type):
         if stop_type == Stop.COAST:        
@@ -106,8 +107,6 @@ class Robot:
             self.leftDrive.hold()
             self.rightDrive.hold()
 
-
-
     def zeroTaskMotors(self, resetLeft = True, resetRight = True):
         if resetLeft:
             self.leftTask.reset_angle(0)
@@ -119,24 +118,35 @@ class Robot:
     def update(self):
         self.voltage = self.brick.battery.voltage() / 1000
         self.localizer.update()
-        self.gamepad.updateButtons()
+        self.run_control.update()
+
+        if self.run_control.entered_center:
+            self.led_control.entered_center()
+        elif self.run_control.done():
+            self.led_control.off()
+        else: self.led_control.not_started()
         
 
 
-    def getAngle(self):
-        self.telemetry('angle (deg): ', self.localizer.angle)
+    def showcaseAngle(self):
+        self.telemetry.addData('angle (deg): ', self.localizer.angle)
 
-    def getVel(self):
-        self.telemetry('vel: ', self.localizer.getVelocity())
+    def showcaseVel(self):
+        self.telemetry.addData('vel: ', self.localizer.getVelocity())
 
-    def getVoltage(self):
-        self.telemetry('V: ', self.voltage)
+    def showcaseVoltage(self):
+        self.telemetry.addData('V: ', self.voltage)
 
-    def getPose(self):
-        self.telemetry('x: ', self.localizer.getPoseEstimate().x)
-        self.telemetry('y: ', self.localizer.getPoseEstimate().y)
-        self.telemetry('deg: ', self.localizer.getPoseEstimate().head)
+    def showcasePose(self):
+        self.telemetry.addData('x: ', self.localizer.getPoseEstimate().x)
+        self.telemetry.addData('y: ', self.localizer.getPoseEstimate().y)
+        self.telemetry.addData('deg: ', self.localizer.getPoseEstimate().head)
 
+    def showcaseDeltas(self):
+        self.telemetry.addData('delta L: ', self.localizer.deltaL)  
+        self.telemetry.addData('delta R: ', self.localizer.deltaR)  
+        self.telemetry.addData('delta angle: ', self.localizer.deltaAngle)
+    
     def printPose(self):
         print('x: ', self.localizer.getPoseEstimate().x)
         print('y: ', self.localizer.getPoseEstimate().y)
@@ -144,49 +154,7 @@ class Robot:
 
     def printVel(self):
         print('velocity: ', self.localizer.getVelocity() * 100)
-
-    def showcaseInProgress(self):
-        self.brick.screen.clear()
-        self.telemetry('                          ')
-        self.telemetry('                          ')
-        self.telemetry('run', run)
-        self.telemetry('  in progress...')
     
-    def showcaseDeltas(self):
-        self.telemetry('delta L: ', self.localizer.deltaL)  
-        self.telemetry('delta R: ', self.localizer.deltaR)  
-        self.telemetry('delta angle: ', self.localizer.deltaAngle)
-    
-    def showcaseOptions(self, clear = True):
-        if clear:
-            self.brick.screen.clear()
-            self.telemetry('               ')
-
-        if oneTimeUse:
-            if run < 8:
-                self.telemetry(' next run:', run)
-                self.telemetry('               ')
-            else:
-                self.telemetry('                ')
-                self.telemetry('                ')
-                self.telemetry('      DONE      ')
-                self.telemetry('                ')
-                self.telemetry('                ')
-
-            if not upDone:
-                self.telemetry(' UP ')
-            elif upDone and not leftDone:    
-                self.telemetry(' LEFT ')
-            elif leftDone and not rightDone:    
-                self.telemetry(' RIGHT ')
-            elif rightDone and not downDone:    
-                self.telemetry(' DOWN ')
-            elif downDone and not middleUpDone:   
-                self.telemetry(' MIDDLE + UP ')
-            elif middleUpDone and not middleLeftDone:
-                self.telemetry(' MIDDLE + LEFT ')
-            elif middleLeftDone and not middleRightDone:
-                self.telemetry(' MIDDLE + RIGHT ')
 
 
 

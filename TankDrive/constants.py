@@ -1,5 +1,4 @@
 from pybricks.parameters import Port
-
 import math
 
 W = 15
@@ -11,7 +10,6 @@ MAX_TICKS_PER_SECOND = 1020
 
 MAX_VEL = 0 #cm / s
 MAX_ANGULAR_VEL = 0 #deg / s
-
 
 distanceBetweenWheels = 9.97
 dW = distanceBetweenWheels / 2
@@ -45,30 +43,22 @@ kP_line_follow = 6
 kD_line_follow = 0
 kI_line_follow = 0.0
 
-
-
 timeToTurn = 6 #sec
 failSwitchTime = 0
-run = 1
 
 
 acceleration_dc = 20
 acceleration_interval = 0.4 #sec
 
-
 maxVoltage = 7.9 #volts
 targetAngleValidation = 17
-
-
-upDone, leftDone, rightDone, downDone, middleUpDone, middleLeftDone, middleRightDone, middleDownDone = (
-    False, False, False, False, False, False, False, False)
 
 zeroBeforeEveryMove, zeroBeforeEveryRun, zeroBeforeEveryTask, zeroBeforeMotors = False, True, False, False
 oneTimeUse = False
 
 takeHandsOff = True
 time_to_take_hands_off = 0.6 #sec
-
+do_runs_in_order = False
 
 ltPort, rtPort, ldPort, rdPort, gyroPort, lcPort, rcPort = (
     Port.B, Port.A, Port.C, Port.D, Port.S3, Port.S4, Port.S2
