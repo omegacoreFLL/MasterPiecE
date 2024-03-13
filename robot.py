@@ -75,8 +75,8 @@ class Robot:
             self.is_stopped = False
         
         acceleration = (msToS(self.acceleration_timer.time()) / acceleration_interval) * acceleration_dc
-        if acceleration < targetSpeed:
-            return acceleration
+        if abs(acceleration) < abs(targetSpeed):
+            return acceleration * signum(targetSpeed)
         return targetSpeed
         
 
@@ -115,12 +115,14 @@ class Robot:
 
 
 
-    def update(self):
+    def update(self, isBusy = False):
         self.voltage = self.brick.battery.voltage() / 1000
         self.localizer.update()
         self.run_control.update()
 
-        if self.run_control.entered_center:
+        if isBusy:
+            self.led_control.in_progress()
+        elif self.run_control.entered_center:
             self.led_control.entered_center()
         elif self.run_control.done():
             self.led_control.off()

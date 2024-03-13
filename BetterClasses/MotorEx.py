@@ -79,6 +79,12 @@ class Command:
                 self.motor.hold()
             elif stopType == Stop.COAST:
                 self.motor.coast()
+    
+    def update(self, distance):
+        if abs(abs(distance) - abs(self.startPercent)) < 1:
+            self.start()
+        elif abs(abs(distance) - abs(self.endPercent)) < 1:
+            self.stop()
 
     
     

@@ -1,12 +1,14 @@
 from TankDrive.constants import *
 from BetterClasses.MathEx import *
+from BetterClasses.ErrorEx import *
+from Controllers.PIDController import *
 from pybricks.tools import StopWatch, wait
 from pybricks.ev3devices import ColorSensor
 from pybricks.parameters import Stop
 from robot import *
 
 #calculates time for completing a turn
-def normalizeTimeToTurn(deg):
+def __normalizeTimeToTurn(deg):
     return abs(timeToTurn * deg / 360)
 
 def turnRad(rad, robot, threshold = 0.1, sensitivity = 1):
@@ -16,306 +18,241 @@ def turnDeg(deg, robot,
             threshold = 0.1, 
             sensitivity = 1):
 
-    if not isinstance(deg, float) and not isinstance(deg, int):
-        raise Exception("not a valid 'deg' ----- needed type: float / int")
-    if not isinstance(robot, Robot):
-        raise Exception("not a Robot instance")
-    if not isinstance(threshold, float) and not isinstance(threshold, int):
-        raise Exception("not a valid 'threshold' ----- needed type: float / int")
-    if not isinstance(sensitivity, float) and not isinstance(sensitivity, int):
-        raise Exception("not a valid 'sensitivity' ----- needed type: float / int")
-    
+
+    ErrorEx.isType(deg, "deg", [int, float])
+    ErrorEx.isType(robot, "robot", Robot)
+    ErrorEx.isType(threshold, "threshold", [int, float])
+    ErrorEx.isType(sensitivity, "sensitivity", [int, float])
+
     threshold = abs(threshold)
     sensitivity = abs(sensitivity)
-
-    isBusy = True
-
-    deg = normalizeDegrees(deg)
-    robot.localizer.update()
+    robot.update(isBusy = True)
     pose = robot.localizer.getPoseEstimate()
 
-    #find shortest path to target
-    if (abs(pose.head - deg) < 360 - abs(pose.head - deg)):
-        error = pose.head - deg
-    else: error = signum(pose.head - deg) * 360 - (pose.head - deg)
+
+    deg = normalizeDegrees(deg)
+    head_error = findShortestPath(pose.head, deg)
+    robot.resetFailSwitch(__normalizeTimeToTurn(abs(head_error)) / sensitivity)
 
 
-
-
-    pastError = 0
-    pastTime = 0
-    derivativeTimer = StopWatch()
+    head_controller = PIDController(kP = kP_head, kD = kD_head, kI = 0)
     loopsInTarget = 0
+    isBusy = True
 
-    #calculating max time accorded
-    robot.resetFailSwitch(normalizeTimeToTurn(abs(error)) / sensitivity)
-
-    #loop
     while isBusy:
-        robot.localizer.update()
+        robot.update(isBusy)
         pose = robot.localizer.getPoseEstimate()
 
-        if (abs(pose.head - deg) <= 360 - abs(pose.head - deg)):
-            error = pose.head - deg
-        else: error = -1 * (signum(pose.head - deg) * 360 - (pose.head - deg))
 
-        currentTime = derivativeTimer.time()
-        #check if you reached the target -> stop
-        if (abs(error) <= threshold and abs(pastError) <= threshold) or robot.failSwitchStop():
+        head_error = findShortestPath(pose.head, deg)
+        turn = head_controller.calculate(head_error) + signum(head_error) * kS_head
+
+
+        if abs(head_error) <= threshold or robot.failSwitchStop():
             loopsInTarget = loopsInTarget + 1
         else: 
-            #else calculate motor powers
             loopsInTarget = 0
-
-            d = (error - pastError) / (currentTime - pastTime)
-            power = robot.normalizeVoltage(error * kP_head + d * kD_head + signum(error) * kS_head)
-
-            #to turn in place, motor should spin opposite from one another
-            robot.setWheelPowers(left = -power, right = power, sensitivity = sensitivity)
-
-        pastTime = currentTime
-        pastError = error
+            robot.setWheelPowers(left = -turn, right = turn, sensitivity = sensitivity)
 
         if loopsInTarget == targetAngleValidation:
             isBusy = False
     
-    #stop motors when done
+
     robot.setWheelPowers(0, 0)
     robot.setDriveTo(Stop.BRAKE)
 
 def inLineCM(cm, robot, 
             threshold = 0.1, 
             sensitivity = 1, 
-            correctHeading = True, turnTangential = True, 
+            correctHeading = True, turnTangential = True, tangential_angle = None,
             interpolating = False, accelerating = False,
-            tangential_angle = None, #default val
             listOfCommands = None):
-    
-    if not isinstance(cm, int) and not isinstance(cm, float):
-        raise Exception("not a valid 'cm' ----- needed type: float / int")
-    if not isinstance(robot, Robot):
-        raise Exception("not an instance of Robot")
-    if not isinstance(threshold, float) and not isinstance(threshold, int):
-        raise Exception("not a valid 'threshold' ----- needed type: float / int")
-    if not isinstance(sensitivity, float) and not isinstance(sensitivity, int):
-        raise Exception("not a valid 'sensitivity' ----- needed type: float / int")
-    if not isinstance(correctHeading, bool):
-        raise Exception("not a valid 'correctHeading' ----- needed type: bool")
-    if not isinstance(turnTangential, bool):
-        raise Exception("not a valid 'turnTangential' ----- needed type: bool")
-    if not isinstance(interpolating, bool):
-        raise Exception("not a valid 'interpolating' ----- needed type: bool")
-    if not isinstance(accelerating, bool):
-        raise Exception("not a valid 'accelerating' ----- needed type: bool")
-    if not isinstance(tangential_angle, float) and not isinstance(tangential_angle, int) and not tangential_angle == None:
-        raise Exception("not a valid 'tangential_angle' ----- needed type: float / int")
-    
+
+
+    ErrorEx.isType(cm, "cm", [int, float])
+    ErrorEx.isType(robot, "robot", Robot)
+    ErrorEx.isType(threshold, "threshold", [int, float])
+    ErrorEx.isType(sensitivity, "sensitivity", [int, float])
+    ErrorEx.isType(correctHeading, "correctHeading", bool)
+    ErrorEx.isType(turnTangential, "turnTangential", [int, float])
+    ErrorEx.isType(tangential_angle, "tangential_angle", [int, float])
+    ErrorEx.isType(interpolating, "interpolating", bool)
+    ErrorEx.isType(accelerating, "accelerating", bool)
+
     threshold = abs(threshold)
     sensitivity = abs(sensitivity)
-
-    queuedCommands = not (listOfCommands == None)
-    isBusy = True
-
-    robot.update()
+    robot.update(isBusy = True)
     pose = robot.localizer.getPoseEstimate()
 
-    if tangential_angle == None:
-        deg = normalizeDegrees(pose.head)
-    else: 
-        deg = normalizeDegrees(tangential_angle)
+    if not tangential_angle == None:
+        ErrorEx.isType(tangential_angle, "tangential_angle", [float, int, None])
+        facing_angle = normalizeDegrees(tangential_angle)
+    else: facing_angle = pose.head
+    
 
+    queuedCommands = not (listOfCommands == None)
 
     if queuedCommands:
         for command in listOfCommands:
-            if not isinstance(command, Command):
-                raise Exception("not a Command instance")
+            ErrorEx.isType(command, "command", Command)
 
             command.startPercent = command.startPercent / 100 * cm
             command.endPercent = command.endPercent / 100 * cm
     
-    if (abs(abs(pose.head) - abs(deg)) > 2 and turnTangential):
-        turnDeg(deg, robot)
-        turnDeg(deg, robot)
 
-    pastError = 0
-    pastTime = 0
-    headError = 0
-    derivativeTimer = StopWatch()
+    if turnTangential and abs(facing_angle - pose.head) > 2:
+        turnDeg(facing_angle, robot)
+        turnDeg(facing_angle, robot)
 
+    
+    head_controller = PIDController(kP = kP_correction_agresive, kD = kD_correction, kI = 0)
+    fwd_controller = PIDController(kP = kP_fwd, kD = 0, kI = 0)
     robot.localizer.zeroDistance()
+    isBusy = True
 
-    #loop
     while isBusy: 
-        robot.update()
+        robot.update(isBusy)
         pose = robot.localizer.getPoseEstimate()
 
-        error = robot.localizer.distance - cm
 
-        correction = 0
+        fwd_error = cm - robot.localizer.distance
+        forward = fwd_controller.calculate(fwd_error) + signum(cm) * kS_fwd
+
+
         if correctHeading:
-            if (abs(pose.head - deg) <= 360 - abs(pose.head - deg)):
-                headError = pose.head - deg
-            else: headError = -1 * (signum(pose.head - deg) * 360 - (pose.head - deg))
 
-            currentTime = derivativeTimer.time()
+            if interpolating:
+                kP = kP_interpolating
+            elif abs(fwd_error) < forward_threshold:
+                kP = kP_correction_mild
+            else: kP = kP_correction_agresive
 
-            #if heading is off, calculate the correction power
-            if abs(headError) > threshold:
-                d = (headError - pastError) / (currentTime - pastTime)
-
-                if interpolating:
-                    kP = kP_interpolating
-                elif abs(error) < forward_threshold:
-                    kP = kP_correction_mild
-                else: kP = kP_correction_agresive
-                correction = robot.normalizeVoltage(headError * kP + d * kD_correction)
-            
-            pastTime = currentTime
-            pastError = headError
-
-        if abs(error) <= threshold:
-            isBusy = False
-        else:
-            power = robot.normalizeVoltage(-error * kP_forw) + signum(cm) * kS_forw
-            robot.setWheelPowers(left = power - correction, right = power + correction, 
-                                sensitivity = sensitivity, accelerating = accelerating)
+            head_controller.setCoefficients(kP = kP)
+            head_error = findShortestPath(pose.head, facing_angle)
+            correction = head_controller.calculate(head_error)
         
+        else: correction = 0
+
+
+        if abs(fwd_error) <= threshold:
+            isBusy = False
+        else: robot.setWheelPowers(left = forward - correction, right = forward + correction, 
+                            sensitivity = sensitivity, accelerating = accelerating)
+        
+
         if queuedCommands:
             for command in listOfCommands:
-                if abs(abs(robot.localizer.distance) - abs(command.startPercent)) < 1:
-                    command.start()
-                elif abs(abs(robot.localizer.distance) - abs(command.endPercent)) < 1:
-                    command.stop()
+                command.update(robot.localizer.distance)
 
-    if abs(headError) > 2 and turnTangential:
-        turnDeg(deg, robot)
+
+    if abs(head_error) > 2 and turnTangential:
+        turnDeg(facing_angle, robot)
+        turnDeg(facing_angle)
     
-    #stop motors when done
     robot.setWheelPowers(0, 0)
     robot.setDriveTo(Stop.BRAKE)
 
 def toPosition(target, robot, 
             threshold = 0.1, headThreshold = 0.1, 
             sensitivity = 1, headSensitivity = 1,
-            keepHeading = False, forwards = True, correctHeading = True, 
-            interpolating = False, accelerating = False,
+            keepHeading = False, correctHeading = True, 
+            forwards = True, interpolating = False, accelerating = False,
             listOfCommands = None):
     
 
-    if not isinstance(target, Pose):
-        raise Exception("not an instance of Pose")
-    if not isinstance(robot, Robot):
-        raise Exception("not an instance of Robot")
-    if not isinstance(threshold, float) and not isinstance(threshold, int):
-        raise Exception("not a valid 'threshold' ----- needed type: float / int")
-    if not isinstance(headThreshold, float) and not isinstance(headThreshold, int):
-        raise Exception("not a valid 'headThreshold' ----- needed type: float / int")
-    if not isinstance(sensitivity, float) and not isinstance(sensitivity, int):
-        raise Exception("not a valid 'sensitivity' ----- needed type: float / int")
-    if not isinstance(headSensitivity, float) and not isinstance(headSensitivity, int):
-        raise Exception("not a valid 'headSensitivity' ----- needed type: float / int")
-    if not isinstance(keepHeading, bool):
-        raise Exception("not a valid 'keepHeading' ----- needed type: bool")
-    if not isinstance(forwards, bool):
-        raise Exception("not a valid 'forwards' ----- needed type: bool")
-    if not isinstance(correctHeading, bool):
-        raise Exception("not a valid 'correctHeading' ----- needed type: bool")
-    if not isinstance(interpolating, bool):
-        raise Exception("not a valid 'interpolating' ----- needed type: bool")
-    if not isinstance(accelerating, bool):
-        raise Exception("not a valid 'acccelerating' ----- needed type: bool")
+    ErrorEx.isType(target, "target", Pose)
+    ErrorEx.isType(robot, "robot", Robot)
+    ErrorEx.isType(threshold, "threshold", [int, float])
+    ErrorEx.isType(headThreshold, "headThreshold", [int, float])
+    ErrorEx.isType(sensitivity, "sensitivity", [int, float])
+    ErrorEx.isType(headSensitivity, "headSensitivity", [int, float])
+    ErrorEx.isType(keepHeading, "keepHeading", bool)
+    ErrorEx.isType(correctHeading, "correctHeading", bool)
+    ErrorEx.isType(forwards, "forwards", bool)
+    ErrorEx.isType(interpolating, "interpolating", bool)
+    ErrorEx.isType(accelerating, "accelerating", bool)
+    
     
     threshold = abs(threshold)
     headThreshold = abs(headThreshold)
     sensitivity = abs(sensitivity)
     headSensitivity = abs(headSensitivity)
-    
-    #multitasking?
-    queuedCommands = not (listOfCommands == None)
-    robot.update()
+    robot.update(isBusy = True)
     pose = robot.localizer.getPoseEstimate()
+    
+
+    if forwards:
+        direction_sign = 1
+    else: direction_sign = -1
 
     yError = target.x - pose.x 
     xError = target.y - pose.y 
-    
-    if forwards:
-        rotationAngle = 90
-        sign = -1
-    else:
-        rotationAngle = -90
-        sign = 1
-    
+    pointError = rotateMatrix(yError, xError, toRadians(90 * direction_sign))
 
-    pointError = rotateMatrix(yError, xError, toRadians(rotationAngle))
+    needToTravelDistance = hypot(yError, xError)
+    facing_angle = toDegrees(-math.atan2(pointError.x, pointError.y))
 
-    needToTravelDist = hypot(yError, xError)
-    turnAngle = -math.atan2(pointError.x, pointError.y)
-    deg = toDegrees(turnAngle)
 
-    #relate command intervals to distance intervals
+    queuedCommands = not (listOfCommands == None)
+
     if queuedCommands:
         for command in listOfCommands:
-            if not isinstance(command, Command):
-                raise Exception("not a Command instance")
+            ErrorEx.isType(command, "command", Command)
 
-            command.startPercent = command.startPercent / 100 * needToTravelDist
-            command.endPercent = command.endPercent / 100 * needToTravelDist
+            command.startPercent = command.startPercent / 100 * needToTravelDistance
+            command.endPercent = command.endPercent / 100 * needToTravelDistance
 
-    #twice for better accuracy
-    turnDeg(deg, robot)
-    wait(100)
-    turnDeg(deg, robot)
 
-    isBusy = True 
+    turnDeg(facing_angle, robot)
+    turnDeg(facing_angle, robot)
+
+
+    head_controller = PIDController(kP = kP_correction_agresive, kD = kD_correction, kI = 0)
+    fwd_controller = PIDController(kP = kP_fwd, kD = 0, kI = 0)
     robot.localizer.zeroDistance()
-
-    pastError = 0
-    pastTime = 0
-    derivativeTimer = StopWatch()
-
+    isBusy = True
 
     while isBusy:
-        robot.update()
+        robot.update(isBusy)
         pose = robot.localizer.getPoseEstimate()
 
-        error = abs(robot.localizer.distance) - needToTravelDist
 
-        correction = 0
+        fwd_error = direction_sign * needToTravelDistance - robot.localizer.distance
+        forward = fwd_controller.calculate(fwd_error) + direction_sign * kS_fwd
+
+
         if correctHeading:
-            if (abs(pose.head - deg) <= 360 - abs(pose.head - deg)):
-                headError = pose.head - deg
-            else: headError = -1 * (signum(pose.head - deg) * 360 - (pose.head - deg))
-            currentTime = derivativeTimer.time()
-            
-            if abs(headError) > threshold:
-                d = (headError - pastError) / (currentTime - pastTime)
 
-                if interpolating:
-                    kP = kP_interpolating
-                elif abs(error) < forward_threshold:
-                    kP = kP_correction_mild
-                else: kP = kP_correction_agresive
-                correction = robot.normalizeVoltage(headError * kP + d * kD_correction)
+            if interpolating:
+                kP = kP_interpolating
+            elif abs(fwd_error) < forward_threshold:
+                kP = kP_correction_mild
+            else: kP = kP_correction_agresive
 
-        if abs(error) <= threshold:
+            head_controller.setCoefficients(kP = kP)
+            head_error = findShortestPath(pose.head, facing_angle)
+            correction = head_controller.calculate(head_error)
+
+        else: correction = 0
+
+
+        if abs(fwd_error) <= threshold:
             isBusy = False
-        else:
-            power = -sign * (-error * kP_forw - signum(error) * kS_forw)
-            robot.setWheelPowers(left = power - correction, right = power + correction, 
-                                sensitivity = sensitivity, accelerating = accelerating)
+        else: robot.setWheelPowers(left = forward - correction, right = forward + correction, 
+                            sensitivity = sensitivity, accelerating = accelerating)
+
 
         if queuedCommands:
             for command in listOfCommands:
-                if abs(abs(robot.localizer.distance) - abs(command.startPercent)) < 1:
-                    command.start()
-                elif abs(abs(robot.localizer.distance) - abs(command.endPercent)) < 1:
-                    command.stop()
+                command.update(robot.localizer.distance)
 
         
     if not keepHeading:
         turnDeg(target.head, robot, sensitivity = headSensitivity, threshold = headThreshold)
-    elif abs(headError) > 2:
-        turnDeg(deg, robot)
+        turnDeg(target.head, robot, sensitivity = headSensitivity, threshold = headThreshold)
+    elif abs(head_error) > 2:
+        turnDeg(facing_angle, robot)
+        turnDeg(facing_angle, robot)
 
     robot.setWheelPowers(0, 0)
     robot.setDriveTo(Stop.BRAKE)

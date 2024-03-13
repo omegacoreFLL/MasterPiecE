@@ -12,7 +12,7 @@ from robot import *
 
 
 core = Robot()
-oneTimeUse = True
+oneTimeUse = False
 
 
 
@@ -187,15 +187,19 @@ def dummy():
     wait(1000)
     return 0
 
+def inLine():
+    toPosition(Pose(60, 20, 90), core, forwards = True, accelerating = False, keepHeading = False)
+    toPosition(Pose(0, 0, 0), core, forwards = False, accelerating = False, keepHeading = False)
+
 def loop():
     core.update()
 
 
 
-run_list = [Run(Button.UP, function = dummy, oneTimeUse = oneTimeUse),
-            Run(Button.LEFT, function = dummy, oneTimeUse = oneTimeUse),
-            Run(Button.RIGHT, function = dummy, oneTimeUse = oneTimeUse),
-            Run(Button.DOWN, function = dummy, oneTimeUse = oneTimeUse)]
+run_list = [Run(Button.UP, with_center = False, function = inLine, oneTimeUse = oneTimeUse),
+            Run(Button.DOWN, function = dummy, oneTimeUse = not oneTimeUse),
+            Run(Button.DOWN, function = dummy, oneTimeUse = not oneTimeUse),
+            Run(Button.DOWN, function = dummy, oneTimeUse = not oneTimeUse)]
 
 core.run_control.addRunList(run_list)
 core.run_control.addBeforeEveryRun(function = start_run)

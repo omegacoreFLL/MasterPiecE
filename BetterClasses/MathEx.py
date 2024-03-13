@@ -4,9 +4,6 @@ deg_2_rad = math.pi / 180
 rad_2_deg = 180 / math.pi
 
 
-# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-#* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
 
 class Point:
     def __init__(self, x = 0, y = 0):
@@ -32,7 +29,6 @@ class Pose(Point):
     def set(self, x, y, head):
         super().set(x, y)
         self.head = head 
-
 
 
 
@@ -67,13 +63,11 @@ def toDegrees(rad):
 def hypot(x, y):
     return math.sqrt(x * x + y * y)
 
-#finding the sign of a number ('signum' = sign + number, conventionally again)
 def signum(x):
     if x < 0:
         return -1
     return 1
 
-#milliseconds to second
 def msToS(ms):
     return ms / 1000
 
@@ -87,6 +81,10 @@ def clipMotor(value):
         value = 100
     return value
 
+def findShortestPath(current_angle, target_angle):
+    if (abs(target_angle - current_angle) <= 360 - abs(target_angle - current_angle)):
+        shortest_path = -1 * (target_angle - current_angle)
+    else: shortest_path = -1 * (target_angle - current_angle - signum(target_angle - current_angle) * 360)
 
-
+    return shortest_path
 

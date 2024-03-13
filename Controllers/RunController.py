@@ -8,11 +8,12 @@ default_start_run_button = Button.CENTER
 run_colors = [Color.GREEN, Color.WHITE, Color.BROWN, Color.RED, Color.YELLOW, Color.BLACK, Color.ORANGE, Color.BLUE]
 
 class Run():
-    def __init__(self, button, function, run_number = None, color = None, oneTimeUse = True):
+    def __init__(self, button, function, run_number = None, color = None, oneTimeUse = True, with_center = False):
         self.button = button
         self.run_number = run_number
         self.runs = 0
         self.oneTimeUse = oneTimeUse
+        self.with_center = with_center
 
         self.running = False
         self.pastRunning = False
@@ -97,7 +98,7 @@ class RunController():
         run.update()
         temporary_start = False
 
-        if self.__needToEnterCenter(run.run_number):
+        if run.with_center:
             if self.entered_center:
                 if self.gamepad.wasJustPressed(run.button):
                     temporary_start = True
@@ -117,9 +118,6 @@ class RunController():
         if start: 
             run.running = True
 
-    def __needToEnterCenter(self, run_number):
-        return run_number > 4
-
     def __updateManual(self):
         #skip update when done
         if self.done():
@@ -130,28 +128,50 @@ class RunController():
 
         if self.gamepad.wasJustPressed(Button.CENTER):
             self.entered_center = not self.entered_center
-        
+
+        #if same button, run the one ran fewer times
+        optimal_run = Run(None, None) 
+        optimal_run.runs = -1
+        past_run_number = -1
+
         for run in range(self.total_runs):
+            current_run = self.run_list[run]
+
             if not do_runs_in_order or run + 1 == self.next_run:
-                self.__shouldStartRun(self.run_list[run])
-                if self.run_list[run].hasJustStarted():
-                    self.__start(self.run_list[run])
+                self.__shouldStartRun(current_run)
+
+                if current_run.runable() and current_run.hasJustStarted():
+
+                    if optimal_run.button == None:
+                        optimal_run = current_run
+                        past_run_number = run
+
+                    elif current_run.runs < optimal_run.runs:
+                        self.run_list[past_run_number].running = False
+                        optimal_run = current_run
+                        past_run_number = run
+
+                    else: self.run_list[run].running = False
+
+        if not optimal_run.button == None:          
+            self.__start(optimal_run)
         
     def __updateNextRun(self, current_run):
         if current_run.run_number == self.next_run:
             this_loop = self.run_loops
 
-            while not self.run_list[self.next_run - 1].runable() and self.run_loops == this_loop:
+            verified = 0
+            found = False
+            while (not self.run_list[self.next_run - 1].runable() or not found) and verified <= self.total_runs:
+
                 if self.next_run >= self.total_runs:
                     self.next_run = 1
                     self.run_loops += 1
                 else: self.next_run += 1
-            
-            if not self.run_loops == this_loop and self.next_run == current_run.run_number:
-                if self.next_run >= self.total_runs:
-                    self.next_run = 1
-                    self.run_loops += 1
-                else: self.next_run += 1
+
+                if self.run_list[self.next_run - 1].runable():
+                    found = True
+                verified += 1
 
     #upcoming feature.
     def __updateAuto(self):
@@ -204,7 +224,7 @@ class RunController():
         self.telemetry.addData("next run:", self.next_run)
         self.telemetry.addData("                         ")
 
-        if next_run.run_number > 4:
+        if next_run.with_center:
             self.telemetry.addData("Button.CENTER +    ")
         self.telemetry.addData(next_run.button)
 

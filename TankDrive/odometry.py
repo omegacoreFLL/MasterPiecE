@@ -41,7 +41,7 @@ class TwoWheelLocalizer:
 
 
     def setPoseEstimate(self, newPose):
-        self.gyro_offset = newPose.head - self.pose.head
+        self.gyro_offset = self.gyro.angle() - newPose.head
         self.pose = self.pastPose = Pose(newPose.x, newPose.y, normalizeDegrees(newPose.head))
 
         self.pastPoseL, self.pastPoseR, self.pastAngle, self.pastTime, self.pastDistance, self.pastVel = [
@@ -63,7 +63,7 @@ class TwoWheelLocalizer:
         self.distance = 0
     
     def zeroPose(self):
-        self.gyro_offset = -self.pose.head
+        self.gyro_offset = self.gyro.angle()
         self.pose = self.pastPose = Pose(0, 0, 0)
 
         self.pastPoseL = self.pastPoseR = self.pastAngle = self.pastTime = self.pastDistance = self.pastVel = 0
@@ -71,7 +71,6 @@ class TwoWheelLocalizer:
 
     def zero(self):
         self.zeroEncoders()
-        self.zeroGyro()
         self.zeroDistance()
         self.zeroPose()
         self.zeroTimer()

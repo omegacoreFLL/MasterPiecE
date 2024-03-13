@@ -21,9 +21,9 @@ kP_head = 1.97 * 1.65
 kD_head = 4.75 * 11.35
 kS_head = 1
 
-kP_forw = 5.5 * 1.2
-kS_forw = 20
-kP_correction_agresive = 7
+kP_fwd = 5.5 * 1.2
+kS_fwd = 20
+kP_correction_agresive = 20
 kP_correction_mild = 4
 kD_correction = 2
 
@@ -48,7 +48,7 @@ failSwitchTime = 0
 
 
 acceleration_dc = 20
-acceleration_interval = 0.4 #sec
+acceleration_interval = 0.3 #sec
 
 maxVoltage = 7.9 #volts
 targetAngleValidation = 17
