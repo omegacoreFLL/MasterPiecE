@@ -1,10 +1,5 @@
 import math
 
-deg_2_rad = math.pi / 180
-rad_2_deg = 180 / math.pi
-
-
-
 class Point:
     def __init__(self, x = 0, y = 0):
         self.x = x
@@ -55,10 +50,10 @@ def normalizeRadians(rad):
     return rad   
 
 def toRadians(deg):
-   return deg * deg_2_rad
+   return deg * math.pi / 180
 
 def toDegrees(rad):
-    return rad * rad_2_deg
+    return rad * 180 / math.pi
 
 def hypot(x, y):
     return math.sqrt(x * x + y * y)

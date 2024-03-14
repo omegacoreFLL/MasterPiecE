@@ -8,8 +8,6 @@ GEAR_RATIO = 1 # in / out
 TICKS_PER_REVOLUTION = 360
 MAX_TICKS_PER_SECOND = 1020
 
-MAX_VEL = 0 #cm / s
-MAX_ANGULAR_VEL = 0 #deg / s
 
 distanceBetweenWheels = 9.97
 dW = distanceBetweenWheels / 2
@@ -17,8 +15,8 @@ dW = distanceBetweenWheels / 2
 generalCurveMultiplier = 3
 secondsToMilliseconds = 1000
 
-kP_head = 1.97 * 1.65 
-kD_head = 4.75 * 11.35
+kP_head = 1.97 * 1.25 
+kD_head = 4.75 * 10.35
 kS_head = 1
 
 kP_fwd = 5.5 * 1.2
@@ -33,8 +31,8 @@ forward_threshold = 18 #cm
 minimum_power = 5
 
 turn_rate = 0.85 #line squaring
-left_on_line = 10
-right_on_line = 10
+left_on_line = 9
+right_on_line = 9
 
 on_edge = 20 #line following
 kP_head_lf = 5

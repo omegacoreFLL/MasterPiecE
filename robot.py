@@ -34,7 +34,7 @@ class Robot:
         self.gyro = GyroSensor(gyroPort)
         
         self.gamepad = ButtonEx(self.brick)
-        self.telemetry = Telemetry(self.brick)
+        self.telemetry = TelemetryEx(self.brick)
         self.run_control = RunController(self.gamepad, self.brick, self.telemetry)
         self.localizer = TwoWheelLocalizer(self.leftDrive, self.rightDrive, self.gyro, upside_down_gyro = True)
 
@@ -118,7 +118,7 @@ class Robot:
     def update(self, isBusy = False):
         self.voltage = self.brick.battery.voltage() / 1000
         self.localizer.update()
-        self.run_control.update()
+        #self.run_control.update()
 
         if isBusy:
             self.led_control.in_progress()

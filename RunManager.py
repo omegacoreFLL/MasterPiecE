@@ -187,12 +187,22 @@ def dummy():
     wait(1000)
     return 0
 
-def inLine():
-    toPosition(Pose(60, 20, 90), core, forwards = True, accelerating = False, keepHeading = False)
-    toPosition(Pose(0, 0, 0), core, forwards = False, accelerating = False, keepHeading = False)
+def inThread():
+    timer = StopWatch()
+    time = 0
 
-def loop():
-    core.update()
+    while True:
+        core.update()
+        past = timer.time()
+        print("freq: ", 1000 / (past - time))
+        time = past
+
+def inLine():
+    toPosition(Pose(60, 20, 90), core, accelerating = True)
+    toPosition(Pose(0, 0, 0), core, accelerating = True)
+
+#def loop():
+    #core.update()
 
 
 

@@ -1,10 +1,13 @@
+from pybricks.hubs import EV3Brick
+from BetterClasses.ErrorEx import *
 
-class Telemetry():
+class TelemetryEx():
     def __init__(self, brick):
-        self.brick = brick
+        ErrorEx.isType(brick, "brick", EV3Brick)
+        self.__brick = brick
     
     def addData(self, *message):
-        self.brick.screen.print(message)
+        self.__brick.screen.print(message)
     
     def clear(self):
-        self.brick.screen.clear()
+        self.__brick.screen.clear()

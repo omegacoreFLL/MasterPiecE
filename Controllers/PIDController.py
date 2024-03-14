@@ -1,43 +1,54 @@
 
-from pybricks.tools import wait, StopWatch
-import math
+from pybricks.tools import StopWatch
+from BetterClasses.ErrorEx import *
 
 class PIDController():
-    def __init__(self, kP = 0, kD = 0, kI = 0):
-        self.kP = kP
-        self.kD = kD
-        self.kI = kI
+    def __init__(self, kP = 0, kI = 0, kD = 0):
+        ErrorEx.isType(kP, "kP", [int, float])
+        ErrorEx.isType(kI, "kI", [int, float])
+        ErrorEx.isType(kD, "kD", [int, float])
 
-        self.proportional = 0
-        self.derivative = 0
-        self.integral = 0
-        self.error = 0
-        self.currentTime = 0
-        self.pastError = 0
-        self.pastTime = 0
+        self.__kP = kP
+        self.__kD = kD
+        self.__kI = kI
+
+        self.__proportional = 0
+        self.__derivative = 0
+        self.__integral = 0
+
+        self.__current_error = 0
+        self.__current_time = 0
+
+        self.__past_error = 0
+        self.__past_time = 0
     
-        self.derivativeTimer = StopWatch()
+        self.__derivative_timer = StopWatch()
     
-    def setCoefficients(self, kP = None, kD = None, kI = None):
+    def setCoefficients(self, kP = None, kI = None, kD = None):
         if not kP == None:
-            self.kP = kP
-        if not kD == None:
-            self.kD = kD
+            ErrorEx.isType(kP, "kP", [int, float])
+            self.__kP = kP
         if not kI == None:
-            self.kI = kI
+            ErrorEx.isType(kI, "kI", [int, float])
+            self.__kI = kI
+        if not kD == None:
+            ErrorEx.isType(kD, "kD", [int, float])
+            self.__kD = kD
 
     def calculate(self, error):
-        self.error = error
-        self.currentTime = self.derivativeTimer.time()
+        ErrorEx.isType(error, "error", [int, float])
 
-        self.proportional = error
-        self.derivative = (error - self.pastError) / (self.currentTime - self.pastTime)
-        self.integral += error
+        self.__error = error
+        self.__current_time = self.__derivative_timer.time()
 
-        power = self.proportional * self.kP + self.derivative * self.kD + self.integral * self.kI 
+        self.__proportional = error
+        self.__derivative = (error - self.__past_error) / (self.__current_time - self.__past_time)
+        self.__integral += error
+
+        power = self.__proportional * self.__kP + self.__derivative * self.__kD + self.__integral * self.__kI 
   
-        self.pastTime = self.currentTime
-        self.pastError = error
+        self.__past_time = self.__current_time
+        self.__past_error = error
 
         return power
 

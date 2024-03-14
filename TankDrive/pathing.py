@@ -1,6 +1,8 @@
 from TankDrive.constants import *
 from BetterClasses.MathEx import *
 from BetterClasses.ErrorEx import *
+from BetterClasses.ColorSensorEx import *
+from BetterClasses.EdgeDetectorEx import *
 from Controllers.PIDController import *
 from pybricks.tools import StopWatch, wait
 from pybricks.ev3devices import ColorSensor
@@ -74,8 +76,7 @@ def inLineCM(cm, robot,
     ErrorEx.isType(threshold, "threshold", [int, float])
     ErrorEx.isType(sensitivity, "sensitivity", [int, float])
     ErrorEx.isType(correctHeading, "correctHeading", bool)
-    ErrorEx.isType(turnTangential, "turnTangential", [int, float])
-    ErrorEx.isType(tangential_angle, "tangential_angle", [int, float])
+    ErrorEx.isType(turnTangential, "turnTangential", bool)
     ErrorEx.isType(interpolating, "interpolating", bool)
     ErrorEx.isType(accelerating, "accelerating", bool)
 
@@ -85,7 +86,7 @@ def inLineCM(cm, robot,
     pose = robot.localizer.getPoseEstimate()
 
     if not tangential_angle == None:
-        ErrorEx.isType(tangential_angle, "tangential_angle", [float, int, None])
+        ErrorEx.isType(tangential_angle, "tangential_angle", [float, int])
         facing_angle = normalizeDegrees(tangential_angle)
     else: facing_angle = pose.head
     
@@ -95,9 +96,7 @@ def inLineCM(cm, robot,
     if queuedCommands:
         for command in listOfCommands:
             ErrorEx.isType(command, "command", Command)
-
-            command.startPercent = command.startPercent / 100 * cm
-            command.endPercent = command.endPercent / 100 * cm
+            command.calculate(cm)
     
 
     if turnTangential and abs(facing_angle - pose.head) > 2:
@@ -147,7 +146,7 @@ def inLineCM(cm, robot,
 
     if abs(head_error) > 2 and turnTangential:
         turnDeg(facing_angle, robot)
-        turnDeg(facing_angle)
+        turnDeg(facing_angle, robot)
     
     robot.setWheelPowers(0, 0)
     robot.setDriveTo(Stop.BRAKE)
@@ -205,177 +204,143 @@ def toPosition(target, robot,
 
     turnDeg(facing_angle, robot)
     turnDeg(facing_angle, robot)
+    
 
-
-    head_controller = PIDController(kP = kP_correction_agresive, kD = kD_correction, kI = 0)
-    fwd_controller = PIDController(kP = kP_fwd, kD = 0, kI = 0)
-    robot.localizer.zeroDistance()
-    isBusy = True
-
-    while isBusy:
-        robot.update(isBusy)
-        pose = robot.localizer.getPoseEstimate()
-
-
-        fwd_error = direction_sign * needToTravelDistance - robot.localizer.distance
-        forward = fwd_controller.calculate(fwd_error) + direction_sign * kS_fwd
-
-
-        if correctHeading:
-
-            if interpolating:
-                kP = kP_interpolating
-            elif abs(fwd_error) < forward_threshold:
-                kP = kP_correction_mild
-            else: kP = kP_correction_agresive
-
-            head_controller.setCoefficients(kP = kP)
-            head_error = findShortestPath(pose.head, facing_angle)
-            correction = head_controller.calculate(head_error)
-
-        else: correction = 0
-
-
-        if abs(fwd_error) <= threshold:
-            isBusy = False
-        else: robot.setWheelPowers(left = forward - correction, right = forward + correction, 
-                            sensitivity = sensitivity, accelerating = accelerating)
-
-
-        if queuedCommands:
-            for command in listOfCommands:
-                command.update(robot.localizer.distance)
-
+    inLineCM(cm = direction_sign * needToTravelDistance, robot = robot, 
+                sensitivity = sensitivity, correctHeading = correctHeading,
+                interpolating = interpolating, accelerating = accelerating,
+                listOfCommands = listOfCommands)
         
+
     if not keepHeading:
         turnDeg(target.head, robot, sensitivity = headSensitivity, threshold = headThreshold)
         turnDeg(target.head, robot, sensitivity = headSensitivity, threshold = headThreshold)
-    elif abs(head_error) > 2:
-        turnDeg(facing_angle, robot)
-        turnDeg(facing_angle, robot)
+
 
     robot.setWheelPowers(0, 0)
     robot.setDriveTo(Stop.BRAKE)
+    
 
 def lineSquare(robot,
                 sensitivity = 1,
-                backing_distance = 0.7, success_threshold = 1,
+                backing_distance = 1.5, success_threshold = 1,
                 forwards = True, accelerating = False,
                 time_threshold = None):
 
-    if not isinstance(robot, Robot):
-        raise Exception("not a robot instance")
-    if not isinstance(sensitivity, float) and not isinstance(sensitivity, int):
-        raise Exception("not a valid 'sensitivity' ----- needed type: float / int")
-    if not isinstance(backing_distance, float) and not isinstance(backing_distance, int):
-        raise Exception("not a valid 'backing_distance' ----- needed type: float / int")
-    if not isinstance(success_threshold, int):
-        raise Exception("not a valid 'success_threshold' ----- needed type: int")
-    if not isinstance(forwards, bool):
-        raise Exception("not a valid 'forwards' ----- needed type: bool")
-    if not isinstance(accelerating, bool):
-        raise Exception("not a valid 'accelerating' ----- needed type: bool")
-    if not isinstance(time_threshold, float) and not isinstance(time_threshold, int) and not success_threshold == None:
-        raise Exception("not a valid 'time_threshold' ----- needed type: float")
+    ErrorEx.isType(robot, "robot", Robot)
+    ErrorEx.isType(sensitivity, "sensitivity", [int, float])
+    ErrorEx.isType(backing_distance, "backing_distance", [int, float])
+    ErrorEx.isType(success_threshold, "success_threshold", [int, float])
+    ErrorEx.isType(forwards, "forwards", bool)
+    ErrorEx.isType(accelerating, "acceelerating", bool)
     
-    robot.update()
-    pose = robot.localizer.getPoseEstimate()
-    deg = normalizeDegrees(pose.head)
-    
+
     sensitivity = abs(sensitivity)
     success_threshold = abs(success_threshold)
-    time_threshold = abs(time_threshold)
     backing_distance = abs(backing_distance)
+    robot.update(isBusy = True)
+    pose = robot.localizer.getPoseEstimate()
+    facing_angle = pose.head
 
-    timer = StopWatch()
-    derivativeTimer = StopWatch()
-    pastError = 0
-    pastTime = 0
+    left_color = ColorSensorEx(robot.leftColor, target_reflection = left_on_line)
+    right_color = ColorSensorEx(robot.rightColor, target_reflection = right_on_line)
+
 
     if forwards:
-        direction = 1
-    else: direction = -1
+        direction_sign = 1
+    else: direction_sign = -1
+
 
     exitByTime = False
     exitBySuccess = False
-
+    reached_line_detector = EdgeDetectorEx()
     times_reached = 0
-    reached_line = False
-    correction = 0
 
-    timer.reset()
-    while not exitByTime and not exitBySuccess:
-        robot.update()
+    head_controller = PIDController(kP = kP_head_lf, kD = kD_head_lf, kI = 0)
+    turn_direction = 0
+    isBusy = True
+
+    
+    if not time_threshold == None:
+        time_threshold = abs(time_threshold)
+        exit_timer = StopWatch()
+        time_exit = True
+    else: time_exit = False
+    loopTime = 0
+    timer = StopWatch()
+    
+    while isBusy:
+        left_color.update()
+        right_color.update()
+
+        robot.update(isBusy)
         pose = robot.localizer.getPoseEstimate()
+        
 
-        if times_reached > 0:
+        if reached_line_detector.low():
+            head_error = findShortestPath(pose.head, facing_angle)
+            correction = head_controller.calculate(head_error)
+        else: correction = 0
+
+
+        if reached_line_detector.high() > 0:
             forward_sensitivity = 0.7
         else: forward_sensitivity = sensitivity
 
-        if not reached_line:
-            if (abs(pose.head - deg) <= 360 - abs(pose.head - deg)):
-                headError = pose.head - deg
-            else: headError = -1 * (signum(pose.head - deg) * 360 - (pose.head - deg))
-
-            currentTime = derivativeTimer.time()
-
-            if abs(headError) > 0.1:
-                d = (headError - pastError) / (currentTime - pastTime)
-
-                correction = robot.normalizeVoltage(headError * kP_head_lf + d * kD_head_lf)
-        else: correction = 0
-
-        robot.setWheelPowers(100 * direction - correction, 100 * direction + correction, 
+        robot.setWheelPowers(100 * direction_sign - correction, 100 * direction_sign + correction, 
                             sensitivity = forward_sensitivity, accelerating = accelerating)
 
-        left_reading = robot.leftColor.reflection()
-        right_reading = robot.rightColor.reflection()
 
-        actual_turn_rate = abs(left_reading - right_reading) * turn_rate
+        actual_turn_rate = abs(left_color.reading - right_color.reading) * turn_rate
 
-        if left_reading >= left_on_line and right_reading <= right_on_line:
-            inLineCM(cm = (- abs(backing_distance) - 1) * direction, robot = robot, threshold = 1, 
-                    sensitivity = 0.7, turnTangential = False)
-            turnDeg(robot.localizer.getPoseEstimate().head + direction * abs(actual_turn_rate), robot)
+        if not left_color.onColor() and right_color.onColor():
+            reached_line_detector.set(True)
+            times_reached = 0
+            turn_direction = 1
 
-            if not reached_line:
-                timer.reset()
-                reached_line = True
+        elif left_color.onColor() and not right_color.onColor():
+            reached_line_detector.set(True)
+            times_reached = 0
+            turn_direction = -1
 
+        elif left_color.onColor() and right_color.onColor():
+            reached_line_detector.set(True)
+            times_reached += 1
+            turn_direction = 0
+            print(left_color.reading)
+            print(right_color.reading)
+            print("    ")
 
-        elif left_reading <= left_on_line and right_reading >= right_on_line:
-            inLineCM(cm = (- abs(backing_distance) - 1) * direction, robot = robot, threshold = 1, 
-                    sensitivity = 0.7, turnTangential = False)
-            turnDeg(robot.localizer.getPoseEstimate().head - direction * abs(actual_turn_rate), robot)
+        reached_line_detector.update()
 
-            if not reached_line:
-                timer.reset()
-                reached_line = True
-    
+        if reached_line_detector.rising():
+            if time_exit:
+                exit_timer.reset()
 
-        elif left_reading <= left_on_line and right_reading <= right_on_line:
-            times_reached = times_reached + 1
-
-            if times_reached < success_threshold:
-                inLineCM(cm = (- abs(backing_distance) - 1) * direction, robot = robot,  threshold = 1, 
-                        sensitivity = 0.7, turnTangential = False)
-            else: 
+        if reached_line_detector.high():
+            if time_exit:
+                if msToS(exit_timer.time()) > time_threshold:
+                    exitByTime = True
+                    robot.setWheelPowers(0, 0)
+                    robot.setDriveTo(Stop.BRAKE)
+                    print("exit by time")
+            
+            if times_reached >= success_threshold:
                 exitBySuccess = True
+                robot.setWheelPowers(0, 0)
+                robot.setDriveTo(Stop.BRAKE)
                 print("exit by success")
+        
+        isBusy = not exitByTime and not exitBySuccess
+        
+        if (left_color.detector.rising() or right_color.detector.rising()) and isBusy:
+            inLineCM(cm = (abs(backing_distance) + 7) * -direction_sign, robot = robot, threshold = 7, 
+                        sensitivity = 0.7, turnTangential = False)
+            turnDeg(robot.localizer.getPoseEstimate().head + turn_direction * direction_sign * abs(actual_turn_rate), robot)
 
-            if not reached_line:
-                timer.reset()
-                reached_line = True
-
-
-        if not time_threshold == None and reached_line:
-            if msToS(timer.time()) > time_threshold:
-                exitByTime = True
-                print("exit by time")
-    
-
-    robot.setWheelPowers(0, 0)
-    robot.setDriveTo(Stop.BRAKE)
+        endLoopTime = timer.time()
+        print("freq: ", 1000 / (endLoopTime - loopTime))
+        loopTime = endLoopTime
         
 def lineFollow(robot, sensor,
                 sensitivity = 1, time = 10,

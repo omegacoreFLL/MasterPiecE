@@ -20,5 +20,9 @@ from RunManager import *
 import threading
 
 core.led_control.not_started()
+thr = threading.Thread(target = inThread)
+
+
+thr.start()
 while True:
-    loop()
+    core.run_control.update()
