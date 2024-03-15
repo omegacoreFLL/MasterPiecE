@@ -1,15 +1,15 @@
-from pybricks.hubs import EV3Brick
+from pybricks.tools import wait, StopWatch
 from pybricks.ev3devices import Motor
 from pybricks.parameters import Stop
-from pybricks.tools import wait, StopWatch
-
-from BetterClasses.mathEx import * 
-from BetterClasses.ButtonsEx import *
-from BetterClasses.ErrorEx import *
-from TankDrive.constants import *
-
+from pybricks.hubs import EV3Brick
 import math
 
+from BetterClasses.ButtonsEx import *
+from BetterClasses.ErrorEx import *
+from BetterClasses.mathEx import * 
+from TankDrive.constants import *
+
+#instead of an enum
 class Action:
     def __init_(self, action):
         self.RUN = self.RUN_TIME = self.RUN_ANGLE = self.RUN_TARGET = self.RUN_UNTIL_STALLED = self.DC = False
@@ -35,16 +35,14 @@ class Action:
                             - DC
         """)
 
+#command a run type to specified motor, in between certain percents of another action
+#   made to replicate threading, in form of multitasking
+#   percent is then computed into distances and run when scheduled
 class Command:
     def __init__(self, motor, run_type, speed, start_percent, value = 0, one_time_use = False, end_percent = 100):
-        ErrorEx.isType(motor, "motor", Motor)
-        ErrorEx.isType(run_type, "run_type", Action)
-        ErrorEx.isType(speed, "speed", [int, float])
-        ErrorEx.isType(start_percent, "start_percent", [int, float])
-        ErrorEx.isType(value, "value", [int, float])
-        ErrorEx.iaType(one_time_use, "one_time_use", bool)
-        ErrorEx.isType(end_percent, "end_percent", [int, float])
-        
+        isType([motor, run_type, speed, start_percent, value, one_time_use, end_percent],
+                 ["motor", "speed", "start_percent", "value", "one_time_use", "end_percent"], 
+                 [Motor, Action, [int, float], [int, float], [int, float], bool, [int, float]])
 
         self.__motor = motor
         self.__run_type = run_type
@@ -62,7 +60,7 @@ class Command:
         self.__has_build = False
     
     def calculate(self, total_distance):
-        ErrorEx.isType(total_distance, "total_distance", [int, float])
+        isType([total_distance], ["total_distance"], [[int, float]])
 
         self.__start_distance = self.__start_percent / 100 * total_distance
         self.__end_distance = self.__end_percent / 100 * total_distance
@@ -94,7 +92,6 @@ class Command:
         self.numberOfCalls += 1
     
     def __stop(self, stop_type = Stop.BRAKE):
-        ErrorEx.isType(stop_type, "stop_type", Stop)
         if self.__run_type == 'RUN' or self.__run_type == 'DC':
 
             if stop_type == Stop.BRAKE:
@@ -111,11 +108,11 @@ class Command:
     def update(self, distance):
         if not self.__has_build:
             __throw_initialization_error()
-        ErrorEx.isType(distance, "distance", [int, float])
+        isType([distance], ["distance"], [[int, float]])
 
-        if abs(abs(distance) - abs(self.__start_distance)) < 1:
+        if abs(distance - self.__start_distance) < 1:
             self.__start()
-        elif abs(abs(distance) - abs(self.__stop_distance)) < 1:
+        elif abs(distance - self.__stop_distance) < 1:
             self.__stop()
     
 

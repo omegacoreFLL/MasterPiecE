@@ -1,14 +1,19 @@
 from pybricks.parameters import Button, Color
-from pybricks.tools import wait
+from BetterClasses.ErrorEx import *
 from TankDrive.constants import *
+from pybricks.tools import wait
 import math
 
-
-default_start_run_button = Button.CENTER
-run_colors = [Color.GREEN, Color.WHITE, Color.BROWN, Color.RED, Color.YELLOW, Color.BLACK, Color.ORANGE, Color.BLUE]
-
+#class to describe run-specific constants
 class Run():
     def __init__(self, button, function, run_number = None, color = None, oneTimeUse = True, with_center = False):
+        isType([button, oneTimeUse, with_center], 
+                ["button, oneTimeUse, with_center"],
+                [Button, bool, bool])
+        
+        if button == Button.CENTER:
+            raise Exception("can't use 'Button.CENTER' for starting a run")
+            
         self.button = button
         self.run_number = run_number
         self.runs = 0
@@ -42,10 +47,8 @@ class Run():
     
     def done(self):
         return self.oneTimeUse and self.runs > 0
-    
 
-
-
+#logic for run-selection. Don't modify things here    
 class RunController():
     def __init__(self, gamepad, brick, telemetry, run_list = None):
 
@@ -95,33 +98,18 @@ class RunController():
 
 
     def __shouldStartRun(self, run):
+        if not run.runable():
+            return 0
+        
         run.update()
-        temporary_start = False
+        if (run.with_center and self.entered_center) or (not run.with_center and not self.entered_center):
+            if self.gamepad.wasJustPressed(run.button):
+                run.running = True
 
-        if run.with_center:
-            if self.entered_center:
-                if self.gamepad.wasJustPressed(run.button):
-                    temporary_start = True
-        else:
-            if not self.entered_center:
-                if self.gamepad.wasJustPressed(run.button):
-                    temporary_start = True
-        
-        start = False
-
-        if temporary_start:
-            if run.oneTimeUse:
-                if run.runs == 0:
-                    start = True
-            else: start = True
-        
-        if start: 
-            run.running = True
 
     def __updateManual(self):
         #skip update when done
         if self.done():
-            self.__showcaseNextRun()
             return 0
         
         self.gamepad.updateButtons()
@@ -132,24 +120,24 @@ class RunController():
         #if same button, run the one ran fewer times
         optimal_run = Run(None, None) 
         optimal_run.runs = -1
-        past_run_number = -1
+        past_run_index = -1
 
         for run in range(self.total_runs):
             current_run = self.run_list[run]
 
             if not do_runs_in_order or run + 1 == self.next_run:
-                self.__shouldStartRun(current_run)
 
-                if current_run.runable() and current_run.hasJustStarted():
+                self.__shouldStartRun(current_run)
+                if current_run.hasJustStarted():
 
                     if optimal_run.button == None:
                         optimal_run = current_run
-                        past_run_number = run
+                        past_run_index = run
 
                     elif current_run.runs < optimal_run.runs:
-                        self.run_list[past_run_number].running = False
+                        self.run_list[past_run_index].running = False
                         optimal_run = current_run
-                        past_run_number = run
+                        past_run_index = run
 
                     else: self.run_list[run].running = False
 
@@ -202,15 +190,16 @@ class RunController():
 
     def __showcaseInProgress(self, run_number):
         self.telemetry.clear()
-        self.telemetry.addData('                          ')
-        self.telemetry.addData('                          ')
-        self.telemetry.addData('run', run_number)
-        self.telemetry.addData('  in progress...')
+        self.telemetry.addData("                          ")
+        self.telemetry.addData("                          ")
+        self.telemetry.addData("run {0}".format(run_number))
+        self.telemetry.addData("  in progress...")
     
+    #maybe you can modify the telemetry message :D
     def __showcaseNextRun(self):
         self.telemetry.clear()
 
-        if self.done():
+        if self.__done():
             self.telemetry.addData("                  ")
             self.telemetry.addData("    DONE    ")
             self.telemetry.addData("     <3         ")
@@ -221,14 +210,14 @@ class RunController():
         next_run = self.run_list[self.next_run - 1]
 
         self.telemetry.addData("                         ")
-        self.telemetry.addData("next run:", self.next_run)
+        self.telemetry.addData("next run: {0}".format(self.next_run))
         self.telemetry.addData("                         ")
 
         if next_run.with_center:
             self.telemetry.addData("Button.CENTER +    ")
         self.telemetry.addData(next_run.button)
 
-    def done(self):
+    def __done(self):
         done = True
 
         for run in self.run_list:

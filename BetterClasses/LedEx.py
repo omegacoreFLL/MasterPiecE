@@ -1,14 +1,13 @@
-from pybricks.hubs import EV3Brick
 from pybricks.parameters import Color
 from BetterClasses.ErrorEx import *
+from pybricks.hubs import EV3Brick
 
-default_NOT_STARTED_color = Color.RED
-default_TAKE_YOUR_HANDS_OFF_color = None
-default_IN_PROGRESS_color = Color.GREEN
-default_ENTERED_CENTER_color = Color.ORANGE
-
+#enhanced led control class, made for different run states
+#   DON'T FORGET TO CALL ---build()--- FUNCTION, else you'll get an ERROR
 class LedEx():
     def __init__(self, brick):
+        isType([brick], ["brick"], [EV3Brick])
+
         self.__brick = brick
         self.__not_started_color = default_NOT_STARTED_color
         self.__take_your_hands_off_color = default_TAKE_YOUR_HANDS_OFF_color
@@ -21,25 +20,25 @@ class LedEx():
 
     def addNotStartedColor(self, color):
         if not color == None:
-            ErrorEx.isType(color, "color", Color)
+            isType([color], ["color"], [Color])
         self.__not_started_color = color
         return self
     
     def addTakeYourHandsOffColor(self, color):
         if not color == None:
-            ErrorEx.isType(color, "color", Color)
+            isType([color], ["color"], [Color])
         self.__take_your_hands_off_color = color
         return self
     
     def addInProgressColor(self, color):
         if not color == None:
-            ErrorEx.isType(color, "color", Color)
+            isType([color], ["color"], [Color])
         self.__in_progress_color = color
         return self
     
     def addEnteredCenter(self, color):
         if not color == None:
-            ErrorEx.isType(color, "color", Color)
+            isType([color], ["color"], [Color])
         self.in_entered_center = color
         return self
     
@@ -84,7 +83,7 @@ class LedEx():
         else: __throw_initialization_error()
     
     def setColor(self, color):
-        ErrorEx.isType(color, "color", [Color])
+        isType([color], ["color"], [Color])
         self.__brick.light.on(color)
 
 

@@ -1,5 +1,6 @@
 import math
 
+#---Point--- and ---Pose--- classes, used for localisation
 class Point:
     def __init__(self, x = 0, y = 0):
         self.x = x
@@ -26,7 +27,7 @@ class Pose(Point):
         self.head = head 
 
 
-
+#enhanced math functions
 def rotateMatrix(x, y, angle):
     rotated_x = x * math.cos(angle) - y * math.sin(angle)
     rotated_y = x * math.sin(angle) - y * math.cos(angle)
@@ -77,9 +78,10 @@ def clipMotor(value):
     return value
 
 def findShortestPath(current_angle, target_angle):
-    if (abs(target_angle - current_angle) <= 360 - abs(target_angle - current_angle)):
-        shortest_path = -1 * (target_angle - current_angle)
-    else: shortest_path = -1 * (target_angle - current_angle - signum(target_angle - current_angle) * 360)
+    error = target_angle - current_angle
+    error_abs = abs(error)
 
-    return shortest_path
+    if (error_abs <= 360 - error_abs):
+        return -error
+    return signum(error) * 360 - error
 

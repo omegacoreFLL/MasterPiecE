@@ -1,14 +1,13 @@
 from pybricks.ev3devices import ColorSensor
-from TankDrive.constants import *
 from BetterClasses.EdgeDetectorEx import *
 from BetterClasses.ErrorEx import *
+from TankDrive.constants import *
 
-default_target_reflection = 0
-
+#enhanced color sensor class, with an edge detector for reaching the target color
+#   works just with reflection (for now). Maybe we'll generalize a bit more, if needed
 class ColorSensorEx():
     def __init__(self, colorSensor, target_reflection = None, threshold = 1):
-        ErrorEx.isType(colorSensor, "colorSensor", ColorSensor)
-        ErrorEx.isType(threshold, "threshold", [int, float])
+        isType([colorSensor, threshold], ["colorSensor", "threshold"], [ColorSensor, [int, float]])
         self.__colorSensor = colorSensor
 
         self.__target_relfection = None
@@ -23,7 +22,7 @@ class ColorSensorEx():
         self.reading = 0
     
     def setTargetReflection(self, target_reflection):
-        ErrorEx.isType(target_reflection, "target_reflection", [int, float])
+        isType([target_reflection], ["target_reflection"], [[int, float]])
         self.__target_reflection = target_reflection
     
     def update(self):

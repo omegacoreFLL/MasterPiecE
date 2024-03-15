@@ -6,19 +6,22 @@ from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor,
 from pybricks.parameters import Port, Stop, Direction, Button, Color
 from pybricks.tools import wait, StopWatch, DataLog
 from pybricks.media.ev3dev import SoundFile, ImageFile
-
 import math
 
-from BetterClasses.MathEx import * 
+from Controllers.RunController import *
+from BetterClasses.TelemetryEx import *
 from BetterClasses.ButtonsEx import *
 from BetterClasses.MotorEx import *
-from BetterClasses.LedEx import *
-from BetterClasses.TelemetryEx import *
-from TankDrive.odometry import *
+from BetterClasses.MathEx import * 
 from TankDrive.constants import *
-from Controllers.RunController import *
+from BetterClasses.LedEx import *
+from TankDrive.odometry import *
 
-
+#core class, assuming the most common configuration of an ev3 FLL robot:
+#               - 2 driving motors
+#               - 2 free motors (for attachments)
+#               - 2 color sensors, symmetrical to an imaginary middle line, in front of the robot
+#               - 1 gyro sensor
 class Robot:
     def __init__(self):
         self.brick = EV3Brick()
@@ -115,18 +118,16 @@ class Robot:
 
 
 
-    def update(self, isBusy = False):
+    def updateOdometry(self):
+        self.localizer.update()
+    
+    def updateRuns(self):
+        self.run_control.update()
+
+    def update(self):
         self.voltage = self.brick.battery.voltage() / 1000
         self.localizer.update()
-        #self.run_control.update()
-
-        if isBusy:
-            self.led_control.in_progress()
-        elif self.run_control.entered_center:
-            self.led_control.entered_center()
-        elif self.run_control.done():
-            self.led_control.off()
-        else: self.led_control.not_started()
+        self.run_control.update()
         
 
 
@@ -155,10 +156,4 @@ class Robot:
         print('deg: ', self.localizer.getPoseEstimate().head)
 
     def printVel(self):
-        print('velocity: ', self.localizer.getVelocity() * 100)
-    
-
-
-
-
-        
+        print('velocity: ', self.localizer.getVelocity() * 100)   

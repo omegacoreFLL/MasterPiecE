@@ -13,7 +13,9 @@ from robot import *
 def __normalizeTimeToTurn(deg):
     return abs(timeToTurn * deg / 360)
 
-def turnRad(rad, robot, threshold = 0.1, sensitivity = 1):
+def turnRad(rad, robot, 
+            threshold = 0.1, 
+            sensitivity = 1):
     turnDeg(toDegrees(normalizeRadians(rad)), robot, threshold, sensitivity)
 
 def turnDeg(deg, robot, 
@@ -21,20 +23,20 @@ def turnDeg(deg, robot,
             sensitivity = 1):
 
 
-    ErrorEx.isType(deg, "deg", [int, float])
-    ErrorEx.isType(robot, "robot", Robot)
-    ErrorEx.isType(threshold, "threshold", [int, float])
-    ErrorEx.isType(sensitivity, "sensitivity", [int, float])
+    isType([deg, robot, threshold, sensitivity], 
+            ["deg", "robot", "threshold", "sensitivity"], 
+            [[int, float], Robot, [int, float], [int, float]])
+
 
     threshold = abs(threshold)
     sensitivity = abs(sensitivity)
-    robot.update(isBusy = True)
+    robot.updateOdometry()
     pose = robot.localizer.getPoseEstimate()
 
 
     deg = normalizeDegrees(deg)
     head_error = findShortestPath(pose.head, deg)
-    robot.resetFailSwitch(__normalizeTimeToTurn(abs(head_error)) / sensitivity)
+    robot.resetFailSwitch(__normalizeTimeToTurn(head_error) / sensitivity)
 
 
     head_controller = PIDController(kP = kP_head, kD = kD_head, kI = 0)
@@ -42,7 +44,7 @@ def turnDeg(deg, robot,
     isBusy = True
 
     while isBusy:
-        robot.update(isBusy)
+        robot.updateOdometry()
         pose = robot.localizer.getPoseEstimate()
 
 
@@ -63,43 +65,40 @@ def turnDeg(deg, robot,
     robot.setWheelPowers(0, 0)
     robot.setDriveTo(Stop.BRAKE)
 
-def inLineCM(cm, robot, 
+def inLineCM(cm, robot, inOtherFunction = False,
             threshold = 0.1, 
             sensitivity = 1, 
-            correctHeading = True, turnTangential = True, tangential_angle = None,
+            correctHeading = True, tangential_angle = None,
             interpolating = False, accelerating = False,
             listOfCommands = None):
 
+    if not inOtherFunction:
+        isType([cm, robot, threshold, sensitivity, correctHeading, interpolating, accelerating],
+                ["cm", "robot", "threshold", "sensitivity", "correctHeading", "interpolating", "accelerating"],
+                [[int, float], Robot, [int, float], [int, float], bool, bool, bool])
 
-    ErrorEx.isType(cm, "cm", [int, float])
-    ErrorEx.isType(robot, "robot", Robot)
-    ErrorEx.isType(threshold, "threshold", [int, float])
-    ErrorEx.isType(sensitivity, "sensitivity", [int, float])
-    ErrorEx.isType(correctHeading, "correctHeading", bool)
-    ErrorEx.isType(turnTangential, "turnTangential", bool)
-    ErrorEx.isType(interpolating, "interpolating", bool)
-    ErrorEx.isType(accelerating, "accelerating", bool)
 
-    threshold = abs(threshold)
-    sensitivity = abs(sensitivity)
-    robot.update(isBusy = True)
+        threshold = abs(threshold)
+        sensitivity = abs(sensitivity)
+        robot.updateOdometry()
+        
+
     pose = robot.localizer.getPoseEstimate()
-
     if not tangential_angle == None:
-        ErrorEx.isType(tangential_angle, "tangential_angle", [float, int])
+        isType([tangential_angle], ["tangential_angle"], [[float, int]])
         facing_angle = normalizeDegrees(tangential_angle)
     else: facing_angle = pose.head
-    
+        
 
     queuedCommands = not (listOfCommands == None)
 
     if queuedCommands:
         for command in listOfCommands:
-            ErrorEx.isType(command, "command", Command)
+            isType([command], ["command"], [Command])
             command.calculate(cm)
     
 
-    if turnTangential and abs(facing_angle - pose.head) > 2:
+    if not interpolating and abs(facing_angle - pose.head) > 0.4:
         turnDeg(facing_angle, robot)
         turnDeg(facing_angle, robot)
 
@@ -109,12 +108,14 @@ def inLineCM(cm, robot,
     robot.localizer.zeroDistance()
     isBusy = True
 
+
     while isBusy: 
-        robot.update(isBusy)
+        robot.updateOdometry()
         pose = robot.localizer.getPoseEstimate()
 
 
         fwd_error = cm - robot.localizer.distance
+        fwd_error_abs = abs(fwd_error)
         forward = fwd_controller.calculate(fwd_error) + signum(cm) * kS_fwd
 
 
@@ -122,7 +123,7 @@ def inLineCM(cm, robot,
 
             if interpolating:
                 kP = kP_interpolating
-            elif abs(fwd_error) < forward_threshold:
+            elif fwd_error_abs < forward_threshold:
                 kP = kP_correction_mild
             else: kP = kP_correction_agresive
 
@@ -133,7 +134,7 @@ def inLineCM(cm, robot,
         else: correction = 0
 
 
-        if abs(fwd_error) <= threshold:
+        if fwd_error_abs <= threshold:
             isBusy = False
         else: robot.setWheelPowers(left = forward - correction, right = forward + correction, 
                             sensitivity = sensitivity, accelerating = accelerating)
@@ -143,15 +144,15 @@ def inLineCM(cm, robot,
             for command in listOfCommands:
                 command.update(robot.localizer.distance)
 
-
-    if abs(head_error) > 2 and turnTangential:
+    if abs(head_error) > 0.4:
         turnDeg(facing_angle, robot)
         turnDeg(facing_angle, robot)
-    
-    robot.setWheelPowers(0, 0)
-    robot.setDriveTo(Stop.BRAKE)
 
-def toPosition(target, robot, 
+    elif not inOtherFunction:
+        robot.setWheelPowers(0, 0)
+        robot.setDriveTo(Stop.BRAKE)
+
+def toPosition(target, robot, inOtherFunction = False,
             threshold = 0.1, headThreshold = 0.1, 
             sensitivity = 1, headSensitivity = 1,
             keepHeading = False, correctHeading = True, 
@@ -159,25 +160,18 @@ def toPosition(target, robot,
             listOfCommands = None):
     
 
-    ErrorEx.isType(target, "target", Pose)
-    ErrorEx.isType(robot, "robot", Robot)
-    ErrorEx.isType(threshold, "threshold", [int, float])
-    ErrorEx.isType(headThreshold, "headThreshold", [int, float])
-    ErrorEx.isType(sensitivity, "sensitivity", [int, float])
-    ErrorEx.isType(headSensitivity, "headSensitivity", [int, float])
-    ErrorEx.isType(keepHeading, "keepHeading", bool)
-    ErrorEx.isType(correctHeading, "correctHeading", bool)
-    ErrorEx.isType(forwards, "forwards", bool)
-    ErrorEx.isType(interpolating, "interpolating", bool)
-    ErrorEx.isType(accelerating, "accelerating", bool)
-    
-    
-    threshold = abs(threshold)
-    headThreshold = abs(headThreshold)
-    sensitivity = abs(sensitivity)
-    headSensitivity = abs(headSensitivity)
-    robot.update(isBusy = True)
-    pose = robot.localizer.getPoseEstimate()
+    if not inOtherFunction:
+        isType([target, robot, threshold, headThreshold, sensitivity, headSensitivity, keepHeading, correctHeading, forwards, interpolating, accelerating],
+                ["target", "robot", "threshold", "headThreshold", "sensitivity", "headSensitivity", "keepHeading", "correctHeading", "forwards", "interpolating", "accelerating"], 
+                [Pose, Robot, [int, float], [int, float], [int, float], [int, float], bool, bool, bool, bool, bool])
+        
+        
+        threshold = abs(threshold)
+        headThreshold = abs(headThreshold)
+        sensitivity = abs(sensitivity)
+        headSensitivity = abs(headSensitivity)
+        robot.updateOdometry()
+        pose = robot.localizer.getPoseEstimate()
     
 
     if forwards:
@@ -192,53 +186,36 @@ def toPosition(target, robot,
     facing_angle = toDegrees(-math.atan2(pointError.x, pointError.y))
 
 
-    queuedCommands = not (listOfCommands == None)
-
-    if queuedCommands:
-        for command in listOfCommands:
-            ErrorEx.isType(command, "command", Command)
-
-            command.startPercent = command.startPercent / 100 * needToTravelDistance
-            command.endPercent = command.endPercent / 100 * needToTravelDistance
-
-
-    turnDeg(facing_angle, robot)
-    turnDeg(facing_angle, robot)
-    
-
-    inLineCM(cm = direction_sign * needToTravelDistance, robot = robot, 
+    inLineCM(cm = direction_sign * needToTravelDistance, robot = robot, inOtherFunction = True,
                 sensitivity = sensitivity, correctHeading = correctHeading,
-                interpolating = interpolating, accelerating = accelerating,
-                listOfCommands = listOfCommands)
+                tangential_angle = facing_angle, interpolating = interpolating, 
+                accelerating = accelerating, listOfCommands = listOfCommands)
         
 
     if not keepHeading:
         turnDeg(target.head, robot, sensitivity = headSensitivity, threshold = headThreshold)
         turnDeg(target.head, robot, sensitivity = headSensitivity, threshold = headThreshold)
 
-
-    robot.setWheelPowers(0, 0)
-    robot.setDriveTo(Stop.BRAKE)
+    elif not inOtherFunction:
+        robot.setWheelPowers(0, 0)
+        robot.setDriveTo(Stop.BRAKE)
     
-
 def lineSquare(robot,
                 sensitivity = 1,
                 backing_distance = 1.5, success_threshold = 1,
                 forwards = True, accelerating = False,
                 time_threshold = None):
 
-    ErrorEx.isType(robot, "robot", Robot)
-    ErrorEx.isType(sensitivity, "sensitivity", [int, float])
-    ErrorEx.isType(backing_distance, "backing_distance", [int, float])
-    ErrorEx.isType(success_threshold, "success_threshold", [int, float])
-    ErrorEx.isType(forwards, "forwards", bool)
-    ErrorEx.isType(accelerating, "acceelerating", bool)
-    
+
+    isType([robot, sensitivity, backing_distance, success_threshold, forwards, accelerating],
+            ["robot", "sensitivity", "backing_distance", "success_threshold", "forwards", "acceelerating"],
+            [Robot, [int, float], [int, float], [int, float], bool, bool])
+
 
     sensitivity = abs(sensitivity)
     success_threshold = abs(success_threshold)
     backing_distance = abs(backing_distance)
-    robot.update(isBusy = True)
+    robot.updateOdometry()
     pose = robot.localizer.getPoseEstimate()
     facing_angle = pose.head
 
@@ -270,54 +247,41 @@ def lineSquare(robot,
     timer = StopWatch()
     
     while isBusy:
+        robot.updateOdometry()
+        pose = robot.localizer.getPoseEstimate()
         left_color.update()
         right_color.update()
 
-        robot.update(isBusy)
-        pose = robot.localizer.getPoseEstimate()
-        
+        left_on_color = left_color.onColor()
+        right_on_color = right_color.onColor()
+        left_reading = left_color.reading
+        right_reading = right_color.reading
 
-        if reached_line_detector.low():
-            head_error = findShortestPath(pose.head, facing_angle)
-            correction = head_controller.calculate(head_error)
-        else: correction = 0
+        actual_turn_rate = abs(left_reading - right_reading) * turn_rate
 
 
-        if reached_line_detector.high() > 0:
-            forward_sensitivity = 0.7
-        else: forward_sensitivity = sensitivity
-
-        robot.setWheelPowers(100 * direction_sign - correction, 100 * direction_sign + correction, 
-                            sensitivity = forward_sensitivity, accelerating = accelerating)
-
-
-        actual_turn_rate = abs(left_color.reading - right_color.reading) * turn_rate
-
-        if not left_color.onColor() and right_color.onColor():
+        if not left_on_color and right_on_color:
             reached_line_detector.set(True)
             times_reached = 0
             turn_direction = 1
 
-        elif left_color.onColor() and not right_color.onColor():
+        elif left_on_color and not right_on_color:
             reached_line_detector.set(True)
             times_reached = 0
             turn_direction = -1
 
-        elif left_color.onColor() and right_color.onColor():
+        elif left_on_color and right_on_color:
             reached_line_detector.set(True)
             times_reached += 1
             turn_direction = 0
-            print(left_color.reading)
-            print(right_color.reading)
-            print("    ")
+
 
         reached_line_detector.update()
 
-        if reached_line_detector.rising():
-            if time_exit:
-                exit_timer.reset()
-
-        if reached_line_detector.high():
+        if reached_line_detector.high:
+            forward_sensitivity = 0.7
+            correction = 0
+    
             if time_exit:
                 if msToS(exit_timer.time()) > time_threshold:
                     exitByTime = True
@@ -330,17 +294,37 @@ def lineSquare(robot,
                 robot.setWheelPowers(0, 0)
                 robot.setDriveTo(Stop.BRAKE)
                 print("exit by success")
+
+        elif reached_line_detector.low:
+            forward_sensitivity = sensitivity
+            head_error = findShortestPath(pose.head, facing_angle)
+            correction = head_controller.calculate(head_error)
+
+        elif reached_line_detector.rising:
+            if time_exit:
+                exit_timer.reset()
         
+
         isBusy = not exitByTime and not exitBySuccess
         
-        if (left_color.detector.rising() or right_color.detector.rising()) and isBusy:
-            inLineCM(cm = (abs(backing_distance) + 7) * -direction_sign, robot = robot, threshold = 7, 
+
+        if (left_color.detector.rising or right_color.detector.rising) and isBusy:
+            inLineCM(cm = (backing_distance + 7) * -direction_sign, robot = robot, inOtherFunction = True, threshold = 7, 
                         sensitivity = 0.7, turnTangential = False)
-            turnDeg(robot.localizer.getPoseEstimate().head + turn_direction * direction_sign * abs(actual_turn_rate), robot)
+            turnDeg(robot.localizer.getPoseEstimate().head + turn_direction * direction_sign * actual_turn_rate, robot)
+
+        robot.setWheelPowers(100 * direction_sign - correction, 100 * direction_sign + correction, 
+                    sensitivity = forward_sensitivity, accelerating = accelerating)
+        
+
 
         endLoopTime = timer.time()
         print("freq: ", 1000 / (endLoopTime - loopTime))
         loopTime = endLoopTime
+    
+
+    robot.setWheelPowers(0, 0)
+    robot.setDriveTo(Stop.BRAKE)
         
 def lineFollow(robot, sensor,
                 sensitivity = 1, time = 10,
@@ -382,7 +366,7 @@ def lineFollow(robot, sensor,
     exitByTime = False
     timer.reset()
     while not exitByTime:
-        robot.update()
+        robot.updateOdometry()
         reading = sensor.reflection()
 
         error = reading - on_edge
@@ -406,8 +390,3 @@ def lineFollow(robot, sensor,
     robot.setWheelPowers(0, 0)
     robot.setDriveTo(Stop.BRAKE)
         
-
-
-        
-
-

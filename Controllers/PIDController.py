@@ -2,11 +2,10 @@
 from pybricks.tools import StopWatch
 from BetterClasses.ErrorEx import *
 
+#generic PID controller
 class PIDController():
     def __init__(self, kP = 0, kI = 0, kD = 0):
-        ErrorEx.isType(kP, "kP", [int, float])
-        ErrorEx.isType(kI, "kI", [int, float])
-        ErrorEx.isType(kD, "kD", [int, float])
+        isType([kP, kI, kD], ["kP", "kI", "kD"], [[int, float], [int, float], [int, float]])
 
         self.__kP = kP
         self.__kD = kD
@@ -26,17 +25,17 @@ class PIDController():
     
     def setCoefficients(self, kP = None, kI = None, kD = None):
         if not kP == None:
-            ErrorEx.isType(kP, "kP", [int, float])
+            isType([kP], ["kP"], [[int, float]])
             self.__kP = kP
         if not kI == None:
-            ErrorEx.isType(kI, "kI", [int, float])
+            isType([kI], ["kI"], [[int, float]])
             self.__kI = kI
         if not kD == None:
-            ErrorEx.isType(kD, "kD", [int, float])
+            isType([kD], ["kD"], [[int, float]])
             self.__kD = kD
 
     def calculate(self, error):
-        ErrorEx.isType(error, "error", [int, float])
+        isType([error], ["error"], [[int, float]])
 
         self.__error = error
         self.__current_time = self.__derivative_timer.time()

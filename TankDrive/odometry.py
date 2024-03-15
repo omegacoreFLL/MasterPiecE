@@ -13,7 +13,7 @@ TICKS_PER_REVOLUTION = 360
 
 dW = TRACK_WIDTH / 2
 
-def encoderTicksToCM(ticks):
+def __encoderTicksToCM(ticks):
     return ticks * GEAR_RATIO * 2 * math.pi * WHEEL_RADIUS / TICKS_PER_REVOLUTION
 
 class TwoWheelLocalizer:
@@ -78,8 +78,8 @@ class TwoWheelLocalizer:
 
     
     def updateDeltas(self):
-        self.poseL = encoderTicksToCM(self.leftEncoder.angle())
-        self.poseR = encoderTicksToCM(self.rightEncoder.angle())
+        self.poseL = __encoderTicksToCM(self.leftEncoder.angle())
+        self.poseR = __encoderTicksToCM(self.rightEncoder.angle())
         self.angle = normalizeDegrees(self.gyro.angle() * self.gyro_direction + self.gyro_offset)
         self.time = self.timer.time()
 
