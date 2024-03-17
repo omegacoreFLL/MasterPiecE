@@ -39,10 +39,10 @@ class Action:
 #   made to replicate threading, in form of multitasking
 #   percent is then computed into distances and run when scheduled
 class Command:
-    def __init__(self, motor, run_type, speed, start_percent, value = 0, one_time_use = False, end_percent = 100):
+    def __init__(self, motor, run_type, speed, value = 0, one_time_use = False, start_percent = 0, end_percent = 100):
         isType([motor, run_type, speed, start_percent, value, one_time_use, end_percent],
-                 ["motor", "speed", "start_percent", "value", "one_time_use", "end_percent"], 
-                 [Motor, Action, [int, float], [int, float], [int, float], bool, [int, float]])
+                 ["motor", "run_type", "speed", "start_percent", "value", "one_time_use", "end_percent"], 
+                 [Motor, str, [int, float], [int, float], [int, float], bool, [int, float]])
 
         self.__motor = motor
         self.__run_type = run_type
@@ -53,7 +53,7 @@ class Command:
         self.__one_time_use = one_time_use
         
         self.__start_percent = start_percent
-        self.__endPercent = end_percent
+        self.__end_percent = end_percent
 
         self.__start_distance = 0
         self.__end_distance = 0
@@ -72,24 +72,24 @@ class Command:
         if not self.__one_time_use or self.__number_of_calls < 1:
 
             if self.__run_type == 'RUN':
-                self.__motor.run(speed = self.speed)
+                self.__motor.run(speed = self.__speed)
 
             elif self.__run_type == 'RUN_TIME':
-                self.__motor.run_time(speed = self.speed, time = self.value, wait = False)
+                self.__motor.run_time(speed = self.__speed, time = self.__value, wait = False)
 
             elif self.__run_type == 'RUN_ANGLE':
-                self.__motor.run_angle(speed = self.speed, rotation_angle = self.value, wait = False)
+                self.__motor.run_angle(speed = self.__speed, rotation_angle = self.__value, wait = False)
 
             elif self.__run_type == 'RUN_TARGET':
-                self.__motor.run_target(speed = self.speed, target_angle = self.value, wait = False)
+                self.__motor.run_target(speed = self.__speed, target_angle = self.__value, wait = False)
 
             elif self.__run_type == 'RUN_UNTIL_STALLED':
-                self.__motor.run_until_stalled(speed = self.speed, then = Stop.BRAKE)
+                self.__motor.run_until_stalled(speed = self.__speed, then = Stop.BRAKE)
 
             elif self.__run_type == 'DC':
-                self.__motor.dc(duty = self.speed)
+                self.__motor.dc(duty = self.__speed)
 
-        self.numberOfCalls += 1
+        self.__numberOfCalls += 1
     
     def __stop(self, stop_type = Stop.BRAKE):
         if self.__run_type == 'RUN' or self.__run_type == 'DC':
@@ -112,7 +112,7 @@ class Command:
 
         if abs(distance - self.__start_distance) < 1:
             self.__start()
-        elif abs(distance - self.__stop_distance) < 1:
+        elif abs(distance - self.__end_distance) < 1:
             self.__stop()
     
 

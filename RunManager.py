@@ -198,16 +198,25 @@ def dummy():
     return 0
 
 def test():
-    turnDeg(540, core)
+    inLineCM(40, core, tangential_angle = 45, threshold = 6, interpolating = True, inOtherFunction = True, accelerating = True,
+            listOfCommands = [Command(motor = core.leftTask, run_type = "DC", speed = 80, start_percent = 60)]
+    )
+    inLineCM(40, core, tangential_angle = 10, threshold = 6, interpolating = True, inOtherFunction = True, accelerating = True,
+            listOfCommands = [Command(motor = core.leftTask, run_type = "DC", speed = 80)]
+    )
+    inLineCM(40, core, tangential_angle = -20, threshold = 6, interpolating = True, inOtherFunction = False, accelerating = True,
+            listOfCommands = [Command(motor = core.leftTask, run_type = "DC", speed = 80, end_percent = 50)]
+    )
+
     core.printPose()
 
 
 #create a list of ---Run--- objects, binded to a button (NOT ---Button.CENTER---), giving a function
 #         and optional ---oneTimeUse--- and  ---with_center---- combination
-run_list = [Run(Button.UP, function = turn, oneTimeUse =  False, with_center = False),
-            Run(Button.LEFT, function = dummy, oneTimeUse = True),
-            Run(Button.DOWN, function = dummy, oneTimeUse = True),
-            Run(Button.DOWN, function = dummy, oneTimeUse = True)]
+run_list = [Run(Button.UP, function = test, oneTimeUse =  False, with_center = False),
+            Run(Button.LEFT, function = dummy, oneTimeUse = False),
+            Run(Button.DOWN, function = dummy, oneTimeUse = False),
+            Run(Button.DOWN, function = dummy, oneTimeUse = False)]
 
 #MANDATORY!!! add a run list to the run controller from the robot class
 #               otherwise, you'll get an error. Add start / stop functions if you want

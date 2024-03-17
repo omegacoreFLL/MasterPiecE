@@ -1,4 +1,4 @@
-from pybricks.parameters import Port, Color
+from pybricks.parameters import Port, Color, Button
 import math
 
 #--------------------------IMPORTANT--------------------------
@@ -15,7 +15,7 @@ import math
 
 
 #odometry constants
-#    - W (robot width), L (robot length)  <---  DEPRECATED
+#    - W (robot width), L (robot length), TRACK_WIDTH  <---  DEPRECATED
 #    - WHEEL_RADIUS, GEAR_RATIO  <---  measure those and plug them in
 #    - TICKS_PER_REVOLUTION, MAX_TICKS_PER_SECOND  <---  shouldn't be changed, they're the same for all ev3 large motors
 W = 15 
@@ -25,8 +25,8 @@ GEAR_RATIO = 1 # in / out
 TICKS_PER_REVOLUTION = 360 #----DON'T CHANGE----
 MAX_TICKS_PER_SECOND = 1020 #----DON'T CHANGE----
 
-distanceBetweenWheels = 9.97
-dW = distanceBetweenWheels / 2 #----DON'T CHANGE----
+TRACK_WIDTH = 9.97 #not used
+dW = TRACK_WIDTH / 2 #----DON'T CHANGE----
 
 
 
@@ -62,7 +62,7 @@ kD_correction = 2
 #distance threshold for switching between PID coefficients in ---inLineCM---
 forward_threshold = 18 
 
-#for pure pursuit (future feature?), go to pose without turning first (curve motion)
+#for complex (linked) paths, go to pose without turning first (curve motion)
 kP_interpolating = 5 
 
 #line following constants 
@@ -79,9 +79,9 @@ kI_line_follow = 0.0
 #line squaring constants
 #    -turn_rate  <---  kP coefficient for turning towards the line
 #    -left_on_line, right_on_line  <--- reflection values of a black line
-turn_rate = 0.85 
-left_on_line = 9
-right_on_line = 9
+turn_rate = 0.885
+left_on_line = 11
+right_on_line = 11
 
 
 
@@ -136,11 +136,8 @@ default_ENTERED_CENTER_color = Color.ORANGE
 default_target_reflection = 0
 
 #future feature (for a 3rd color sensor in the robot, to identify attachment color, to auto-select runs)
-default_start_run_button = Button.CENTER
-
-
-
+start_run_button = Button.CENTER
 #in order of runs
-run_colors = [Color.GREEN, Color.WHITE, Color.BROWN, Color.RED, Color.YELLOW, Color.BLACK, Color.ORANGE, Color.BLUE]
+run_colors = [Color.GREEN, Color.WHITE, Color.BROWN, Color.RED, Color.YELLOW, Color.BLACK, Color.BLUE, None]
 
 

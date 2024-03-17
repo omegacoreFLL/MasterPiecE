@@ -1,6 +1,7 @@
 from pybricks.parameters import Color
 from BetterClasses.ErrorEx import *
 from pybricks.hubs import EV3Brick
+from TankDrive.constants import *
 
 #enhanced led control class, made for different run states
 #   DON'T FORGET TO CALL ---build()--- FUNCTION, else you'll get an ERROR

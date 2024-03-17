@@ -7,12 +7,14 @@ import math
 #class to describe run-specific constants
 class Run():
     def __init__(self, button, function, run_number = None, color = None, oneTimeUse = True, with_center = False):
-        isType([button, oneTimeUse, with_center], 
-                ["button, oneTimeUse, with_center"],
-                [Button, bool, bool])
-        
-        if button == Button.CENTER:
-            raise Exception("can't use 'Button.CENTER' for starting a run")
+        if not button == None:
+            isType([button], ["button"], [Button])
+            if button == Button.CENTER:
+                raise Exception("can't use 'Button.CENTER' for starting a run")
+
+        isType([oneTimeUse, with_center], 
+                ["oneTimeUse", "with_center"],
+                [bool, bool])
             
         self.button = button
         self.run_number = run_number
@@ -62,6 +64,7 @@ class RunController():
 
         self.color_sensor_control = False
         self.color_sensor = None
+        self.seen_color = None
         self.entered_center = False
         self.run = 1
 
@@ -94,6 +97,17 @@ class RunController():
     def addColorSensor(self, sensor):
         self.color_sensor = sensor
         self.color_sensor_control = True
+
+        if self.run_list == None:
+            raise Exception("add ---run_list--- first")
+        if self.total_runs > 8:
+            raise Exception("too many runs, there are only 8 different colors")
+        
+        for run in self.run_list:
+            run.button = start_run_button
+            run.with_center = False
+        
+        self.__showcaseNextRun()
     
 
 
@@ -107,13 +121,8 @@ class RunController():
                 run.running = True
 
 
-    def __updateManual(self):
-        #skip update when done
-        if self.done():
-            return 0
-        
-        self.gamepad.updateButtons()
 
+    def __updateManual(self):
         if self.gamepad.wasJustPressed(Button.CENTER):
             self.entered_center = not self.entered_center
 
@@ -161,14 +170,30 @@ class RunController():
                     found = True
                 verified += 1
 
-    #upcoming feature.
     def __updateAuto(self):
-        return 0
+        self.seen_color = self.color_sensor.color()
+
+        for index in range(self.total_runs):
+
+            if run_colors[index] == self.seen_color:
+                current_run = self.run_list[index]
+                self.__shouldStartRun(current_run)
+
+                if current_run.hasJustStarted():
+                    self.__start(current_run)
     
     def update(self):
+        #skip update when done
+        if self.__done():
+            return 0
+        
+        self.gamepad.updateButtons()
+        
         if not self.color_sensor_control:
             self.__updateManual()
-        else: self.__updateAuto()
+        else: 
+            self.__updateAuto()
+            print(self.seen_color)
 
 
 
@@ -213,9 +238,13 @@ class RunController():
         self.telemetry.addData("next run: {0}".format(self.next_run))
         self.telemetry.addData("                         ")
 
-        if next_run.with_center:
-            self.telemetry.addData("Button.CENTER +    ")
-        self.telemetry.addData(next_run.button)
+        if not self.color_sensor_control:
+            if next_run.with_center:
+                self.telemetry.addData("Button.CENTER +    ")
+            self.telemetry.addData(next_run.button)
+
+        else: self.telemetry.addData(run_colors[next_run.run_number - 1])
+
 
     def __done(self):
         done = True
