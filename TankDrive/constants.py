@@ -1,6 +1,15 @@
 from pybricks.parameters import Port, Color, Button
 import math
 
+MAX_VEL = 26.6 # cm/s
+MAX_ACC = 35
+
+class Constrains:
+    def __init__(self, max_vel = MAX_VEL, max_acc = MAX_ACC, max_dec = None):
+        self.MAX_VEL = abs(max_vel)
+        self.ACC = abs(max_acc)
+        self.DEC = -self.ACC if max_dec == None else -abs(max_dec)
+
 #--------------------------IMPORTANT--------------------------
 #         default unit measures:
 #               -encoder values: ticks
@@ -52,6 +61,10 @@ kP_head = 1.97 * 1.45
 kD_head = 4.75 * 10.35
 kS_head = 1
 
+MAX_VOLTAGE = 7.5
+
+
+
 #tune with ---inLineCM--- function
 kP_fwd = 5.5 * 1.2
 kS_fwd = 20 #minimum power, basically, from [-100, 100]
@@ -63,7 +76,7 @@ kD_correction = 2
 forward_threshold = 18 
 
 #for complex (linked) paths, go to pose without turning first (curve motion)
-kP_interpolating = 5 
+kP_interpolating = 2
 
 #line following constants 
 #    ---head--- coefficients for heading correction for ---lineSquaring--- 
@@ -86,24 +99,15 @@ right_on_line = 11
 
 
 #time allocated for a 360 deg turn
-timeToTurn = 6 
+timeToTurn = 3.5
 failSwitchTime = 0 #----DON'T CHANGE----
 
 
 
-#dc value from [-100, 100] for acceleration + time between increments
-acceleration_dc = 2
-acceleration_interval = 0.04
-
-
-
-#used to adjust dc value on motors for a much more linear output
-maxVoltage = 7.9 #----DON'T CHANGE----
-
 
 
 #number of loops in target to confirm a successful turn
-targetAngleValidation = 17
+targetAngleValidation = 30
 
 
 
