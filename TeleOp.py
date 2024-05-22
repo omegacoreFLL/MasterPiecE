@@ -56,6 +56,8 @@ FORMAT = 'llHHI'
 EVENT_SIZE = struct.calcsize(FORMAT)
 event = controller_input.read(EVENT_SIZE)
 
+core.brick.light.on(Color.RED)
+
 while event:
     (tv_sec, tv_usec, ev_type, code, value) = struct.unpack(FORMAT, event)
     task_power = 0
@@ -65,7 +67,7 @@ while event:
             linear_velocity = reformat(value, (0,255), (100,-100))
         
         elif code == 3: # right stick horizontal
-            turn = reformat(value, (0,255), (50, -50))
+            angular_velocity = reformat(value, (0,255), (50, -50))
         
         elif code == 17:
             if value == 1: # dpad up
@@ -122,6 +124,7 @@ while event:
 
     left = clip(linear_velocity - angular_velocity) 
     right = clip(linear_velocity + angular_velocity)
+    core.setWheelPowers(left, right)
 
     # update controller reading
     event = controller_input.read(EVENT_SIZE)

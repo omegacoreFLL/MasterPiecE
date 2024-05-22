@@ -1,7 +1,6 @@
 from pybricks.ev3devices import Motor, GyroSensor
 from pybricks.tools import StopWatch
 
-from BetterClasses.ErrorEx import *
 from BetterClasses.MathEx import *
 from TankDrive.constants import *
 
@@ -17,9 +16,6 @@ def __encoderTicksToCM(ticks):
 class TwoWheelLocalizer:
 
     def __init__(self, left, right, gyroscope, upside_down_gyro = False):
-        isType([left, right, gyroscope, upside_down_gyro],
-                ["left", "right", "gyroscope", "upside_down_gyro"],
-                [Motor, Motor, GyroSensor, bool])
 
         self.__pose = Pose(0, 0, 0)
         self.__pastPose = Pose(0, 0, 0)
@@ -43,7 +39,7 @@ class TwoWheelLocalizer:
 
 
     def setPoseEstimate(self, newPose):
-        isType([newPose], ["newPose"], [Pose])
+
         newPose.head = normalizeDegrees(newPose.head)
         self.__gyro_offset = self.__gyro.angle() + newPose.head
         self.__pose = self.__pastPose = Pose(newPose.x, newPose.y, newPose.head)

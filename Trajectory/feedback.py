@@ -80,11 +80,10 @@ def driveUntilOnColor(robot, left_on_color, right_on_color,
 
     exitByTime = False
     exitBySuccess = False
-    isBusy = True
 
 
-    while isBusy:
-        heading = robot..getHeading()
+    while not (exitByTime or exitBySuccess):
+        heading = robot.getHeading()
         left_color.update()
         right_color.update()
 

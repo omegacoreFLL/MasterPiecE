@@ -26,10 +26,10 @@ class Run():
         
     
     def hasJustStarted(self):
-        return self.starting.rising
+        return self.running.rising
     
     def hasNotStarted(self):
-        return not self.starting.rising
+        return not self.running.rising
     
     def runable(self):
         return not self.one_time_use or not self.runs > 0
@@ -41,7 +41,9 @@ class Run():
         if self.hasJustStarted():
             self.runs +=1
             self.function()
+            
         self.running.set(False)
+        self.running.update()
     
     def done(self):
         return self.one_time_use and self.runs > 0
@@ -84,7 +86,6 @@ class RunController():
 
             if not self.run_list[run].one_time_use:
                 self.all_one_time_use = False
-                break
         
         self.__showcaseNextRun()
     
@@ -131,9 +132,12 @@ class RunController():
 
         # create empty first run
         optimal_run = Run(None, None) 
+        optimal_run.runs = -1
+        past_run_index = -1
 
         for run in range(self.total_runs):
             current_run = self.run_list[run]
+            #print(current_run.run_number)
 
             # get eligible runnable runs
             if not do_runs_in_order or current_run.run_number == self.next_run:
@@ -143,16 +147,19 @@ class RunController():
 
                     if optimal_run.button == None:
                         optimal_run = current_run
+                        past_run_index = run
 
                     # this is the case of runs accessed through the same button
                     elif current_run.runs < optimal_run.runs:
-                        self.run_list[optimal_run.run_number].running = False
+                        self.run_list[past_run_index].running.set(False)
                         optimal_run = current_run
 
-                    else: self.run_list[run].running = False
+                    else: self.run_list[run].running.set(False)
 
+        #print('\n\n\n')
         # found the next run
-        if not optimal_run.button == None:          
+        if not optimal_run.button == None:
+            print(optimal_run.run_number)          
             self.__start(optimal_run)
         
     def __updateNextRun(self, current_run):
@@ -205,7 +212,7 @@ class RunController():
 
     def __start(self, run):
         if not self.before_every_run == None:
-            self.beforeEveryRun()
+            self.before_every_run()
         self.__showcaseInProgress(run.run_number)
         
         run.start()

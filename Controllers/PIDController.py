@@ -27,7 +27,7 @@ class PIDController():
         self.__integral += error
 
         power = (self.__kP * error + # proportional
-                 self.__kD * (error - self.__past_error) / (self.__current_time - self.__past_time) + # derivative
+                 self.__kD * (error - self.__past_error) / (self.__current_time - self.__past_time + 0.001) + # derivative
                  self.__integral * self.__kI) # integral
   
         self.__past_time = self.__current_time

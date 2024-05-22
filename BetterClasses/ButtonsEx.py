@@ -44,22 +44,22 @@ class ButtonEx:
 
     def wasJustPressed(self, button):
         try: 
-            return self.__buttons[button].value.rising
-        except: print("\n\nthat's not a button??")
+            return self.__buttons[button].rising
+        except: print("\n\nthat's not a button?? {0}".format(button))
 
     def wasJustReleased(self, button):
         try:
-            return self.__buttons[button].value.falling
+            return self.__buttons[button].falling
         except: print("\n\nthat's not a button??")
 
 
 
     def isPressed(self, button):
         try:
-            return self.__buttons[button].value.high
+            return self.__buttons[button].high
         except: print("\n\nthat's not a button??")
 
     def isReleased(self, button):
         try:
-            return self.__buttons[button].value.low
+            return self.__buttons[button].low
         except: print("\n\nthat's not a button??")

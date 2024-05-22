@@ -11,7 +11,6 @@ import math
 from Controllers.RunController import *
 from BetterClasses.TelemetryEx import *
 from BetterClasses.ButtonsEx import *
-from BetterClasses.MotorEx import *
 from BetterClasses.MathEx import * 
 from BetterClasses.LedEx import *
 from TankDrive.constants import *
@@ -42,7 +41,7 @@ class Robot:
         self.localizer = TwoWheelLocalizer(self.leftDrive, self.rightDrive, self.gyro, upside_down_gyro = True)
 
         self.led_control = LedEx(self.brick)
-        self.led_control.addTakeYourHandsOffColor(None).build()
+        self.led_control.addTakeYourHandsOffColor(None)
 
         self.fail_switch_timer = StopWatch()
         self.voltage = 0

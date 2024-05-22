@@ -2,9 +2,7 @@ from pybricks.tools import StopWatch
 from pybricks.parameters import Stop
 
 from Controllers.PIDController import *
-from Trajectory.feedforward import *
 from BetterClasses.MathEx import *
-from TankDrive.kinematics import *
 from Trajectory.feedback import *
 from TankDrive.constants import *
 

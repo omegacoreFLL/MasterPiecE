@@ -4,7 +4,6 @@ import math
 
 from Controllers.RunController import *
 from BetterClasses.ButtonsEx import *
-from BetterClasses.MotorEx import *
 from BetterClasses.MathEx import * 
 from TankDrive.constants import *
 from Trajectory.feedback import *
